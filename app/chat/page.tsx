@@ -144,10 +144,10 @@ export default function ChatPage() {
   const showQuickReplies = lastMessage?.role === "assistant" && lastMessage?.suggestedActions && !isLoading
 
   return (
-    <div className="flex flex-col h-screen bg-background">
+    <div className="flex flex-col h-screen bg-gradient-to-br from-[#0f0520] via-[#1a0b2e] to-[#0f0520]">
       <ChatHeader />
 
-      <div className="flex-1 overflow-y-auto px-4 py-6 space-y-6">
+      <div className="flex-1 overflow-y-auto px-4 py-8 space-y-6">
         {messages.map((message) => (
           <div key={message.id}>
             <ChatMessage message={message} />

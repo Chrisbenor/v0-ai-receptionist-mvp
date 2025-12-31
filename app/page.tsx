@@ -93,19 +93,25 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-[#0a0a1a]">
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
-        <DialogContent className="bg-[#232323] border border-white/20 text-white max-w-md">
+        <DialogContent className="bg-gradient-to-br from-[#1a0b2e] to-[#0f0520] border-2 border-purple-500/30 text-white max-w-md shadow-2xl shadow-purple-900/50 backdrop-blur-xl">
           {step === "info" ? (
             <div className="space-y-6">
               <div className="flex items-center justify-between">
-                <h3 className="text-2xl font-bold text-[#E1F404] font-heading">Start Your Trial</h3>
-                <button onClick={() => setShowDialog(false)} className="text-white/60 hover:text-white">
+                <h3 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-purple-400 font-heading">
+                  Start Your Trial
+                </h3>
+                <button
+                  onClick={() => setShowDialog(false)}
+                  className="text-white/60 hover:text-white transition-colors p-2 hover:bg-white/10 rounded-lg"
+                >
                   <X className="h-5 w-5" />
                 </button>
               </div>
+              <p className="text-white/70 text-sm">Experience the power of AI receptionist for your business</p>
               <form onSubmit={handleInfoSubmit} className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="firstName" className="text-white/80">
+                    <Label htmlFor="firstName" className="text-white/90 font-medium">
                       First Name
                     </Label>
                     <Input
@@ -113,11 +119,12 @@ export default function Home() {
                       required
                       value={userInfo.firstName}
                       onChange={(e) => setUserInfo({ ...userInfo, firstName: e.target.value })}
-                      className="bg-white/10 border-white/20 text-white focus:border-[#E1F404]"
+                      className="bg-white/5 border-purple-500/30 text-white placeholder:text-white/40 focus:border-purple-400 focus:ring-2 focus:ring-purple-500/20 rounded-xl backdrop-blur-sm"
+                      placeholder="John"
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="lastName" className="text-white/80">
+                    <Label htmlFor="lastName" className="text-white/90 font-medium">
                       Last Name
                     </Label>
                     <Input
@@ -125,12 +132,13 @@ export default function Home() {
                       required
                       value={userInfo.lastName}
                       onChange={(e) => setUserInfo({ ...userInfo, lastName: e.target.value })}
-                      className="bg-white/10 border-white/20 text-white focus:border-[#E1F404]"
+                      className="bg-white/5 border-purple-500/30 text-white placeholder:text-white/40 focus:border-purple-400 focus:ring-2 focus:ring-purple-500/20 rounded-xl backdrop-blur-sm"
+                      placeholder="Doe"
                     />
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="email" className="text-white/80">
+                  <Label htmlFor="email" className="text-white/90 font-medium">
                     Email
                   </Label>
                   <Input
@@ -139,24 +147,26 @@ export default function Home() {
                     required
                     value={userInfo.email}
                     onChange={(e) => setUserInfo({ ...userInfo, email: e.target.value })}
-                    className="bg-white/10 border-white/20 text-white focus:border-[#E1F404]"
+                    className="bg-white/5 border-purple-500/30 text-white placeholder:text-white/40 focus:border-purple-400 focus:ring-2 focus:ring-purple-500/20 rounded-xl backdrop-blur-sm"
+                    placeholder="john@company.com"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="company" className="text-white/80">
-                    Company
+                  <Label htmlFor="company" className="text-white/90 font-medium">
+                    Company Name
                   </Label>
                   <Input
                     id="company"
                     required
                     value={userInfo.company}
                     onChange={(e) => setUserInfo({ ...userInfo, company: e.target.value })}
-                    className="bg-white/10 border-white/20 text-white focus:border-[#E1F404]"
+                    className="bg-white/5 border-purple-500/30 text-white placeholder:text-white/40 focus:border-purple-400 focus:ring-2 focus:ring-purple-500/20 rounded-xl backdrop-blur-sm"
+                    placeholder="Your Business"
                   />
                 </div>
                 <Button
                   type="submit"
-                  className="w-full bg-[#E1F404] hover:bg-[#E1F404]/90 text-[#232323] font-semibold"
+                  className="w-full bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white font-bold py-6 rounded-xl shadow-lg shadow-purple-900/30 transition-all hover:scale-105"
                 >
                   Continue
                 </Button>
@@ -165,40 +175,57 @@ export default function Home() {
           ) : (
             <div className="space-y-6">
               <div className="flex items-center justify-between">
-                <h3 className="text-2xl font-bold text-[#E1F404] font-heading">Select Your Purpose</h3>
-                <button onClick={() => setShowDialog(false)} className="text-white/60 hover:text-white">
+                <h3 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-purple-400 font-heading">
+                  Select Your Industry
+                </h3>
+                <button
+                  onClick={() => setShowDialog(false)}
+                  className="text-white/60 hover:text-white transition-colors p-2 hover:bg-white/10 rounded-lg"
+                >
                   <X className="h-5 w-5" />
                 </button>
               </div>
-              <p className="text-white/70">Choose the purpose that best matches your business:</p>
-              <div className="grid grid-cols-2 gap-3">
+              <p className="text-white/70">Choose the industry that best matches your business:</p>
+              <div className="grid grid-cols-2 gap-4">
                 <button
                   onClick={() => handlePurposeSelect("Home Services")}
-                  className="p-6 bg-white/5 border border-white/20 rounded-xl hover:bg-white/10 hover:border-[#E1F404] transition-all text-center"
+                  className="group relative p-8 bg-gradient-to-br from-white/5 to-white/[0.02] border border-purple-500/30 rounded-2xl hover:border-purple-400 transition-all hover:scale-105 text-center overflow-hidden shadow-lg hover:shadow-purple-900/30"
                 >
-                  <div className="text-3xl mb-2">🔧</div>
-                  <div className="font-semibold">Home Services</div>
+                  <div className="absolute inset-0 bg-gradient-to-br from-purple-600/0 to-pink-600/0 group-hover:from-purple-600/10 group-hover:to-pink-600/10 transition-all" />
+                  <div className="relative">
+                    <div className="text-4xl mb-3">🔧</div>
+                    <div className="font-semibold text-white">Home Services</div>
+                  </div>
                 </button>
                 <button
                   onClick={() => handlePurposeSelect("Pro Services")}
-                  className="p-6 bg-white/5 border border-white/20 rounded-xl hover:bg-white/10 hover:border-[#E1F404] transition-all text-center"
+                  className="group relative p-8 bg-gradient-to-br from-white/5 to-white/[0.02] border border-purple-500/30 rounded-2xl hover:border-purple-400 transition-all hover:scale-105 text-center overflow-hidden shadow-lg hover:shadow-purple-900/30"
                 >
-                  <div className="text-3xl mb-2">💼</div>
-                  <div className="font-semibold">Pro Services</div>
+                  <div className="absolute inset-0 bg-gradient-to-br from-purple-600/0 to-pink-600/0 group-hover:from-purple-600/10 group-hover:to-pink-600/10 transition-all" />
+                  <div className="relative">
+                    <div className="text-4xl mb-3">💼</div>
+                    <div className="font-semibold text-white">Pro Services</div>
+                  </div>
                 </button>
                 <button
                   onClick={() => handlePurposeSelect("Restaurants")}
-                  className="p-6 bg-white/5 border border-white/20 rounded-xl hover:bg-white/10 hover:border-[#E1F404] transition-all text-center"
+                  className="group relative p-8 bg-gradient-to-br from-white/5 to-white/[0.02] border border-purple-500/30 rounded-2xl hover:border-purple-400 transition-all hover:scale-105 text-center overflow-hidden shadow-lg hover:shadow-purple-900/30"
                 >
-                  <div className="text-3xl mb-2">🍽️</div>
-                  <div className="font-semibold">Restaurants</div>
+                  <div className="absolute inset-0 bg-gradient-to-br from-purple-600/0 to-pink-600/0 group-hover:from-purple-600/10 group-hover:to-pink-600/10 transition-all" />
+                  <div className="relative">
+                    <div className="text-4xl mb-3">🍽️</div>
+                    <div className="font-semibold text-white">Restaurants</div>
+                  </div>
                 </button>
                 <button
                   onClick={() => handlePurposeSelect("Clinics")}
-                  className="p-6 bg-white/5 border border-white/20 rounded-xl hover:bg-white/10 hover:border-[#E1F404] transition-all text-center"
+                  className="group relative p-8 bg-gradient-to-br from-white/5 to-white/[0.02] border border-purple-500/30 rounded-2xl hover:border-purple-400 transition-all hover:scale-105 text-center overflow-hidden shadow-lg hover:shadow-purple-900/30"
                 >
-                  <div className="text-3xl mb-2">🏥</div>
-                  <div className="font-semibold">Clinics</div>
+                  <div className="absolute inset-0 bg-gradient-to-br from-purple-600/0 to-pink-600/0 group-hover:from-purple-600/10 group-hover:to-pink-600/10 transition-all" />
+                  <div className="relative">
+                    <div className="text-4xl mb-3">🏥</div>
+                    <div className="font-semibold text-white">Clinics</div>
+                  </div>
                 </button>
               </div>
             </div>
