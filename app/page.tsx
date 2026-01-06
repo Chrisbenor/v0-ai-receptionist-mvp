@@ -5,7 +5,7 @@ import { useEffect, useState } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
-import { MessageSquare, Calendar, Clock, Users, Send, ChevronDown, X } from "lucide-react"
+import { MessageSquare, Calendar, Clock, Users, Send, X } from "lucide-react"
 import { Dialog, DialogContent } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -15,6 +15,9 @@ export default function Home() {
   const [showDialog, setShowDialog] = useState(false)
   const [step, setStep] = useState<"info" | "purpose">("info")
   const [userInfo, setUserInfo] = useState({ firstName: "", lastName: "", email: "", company: "" })
+  const [isScrolled, setIsScrolled] = useState(false)
+  const [submitError, setSubmitError] = useState("")
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const [heroChatMessages, setHeroChatMessages] = useState([{ role: "assistant", text: "Hi! How can I help today?" }])
   const [isHeroTyping, setIsHeroTyping] = useState(false)
@@ -68,14 +71,51 @@ export default function Home() {
     return runAnimation()
   }, [animationKey])
 
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 20)
+    }
+    window.addEventListener("scroll", handleScroll)
+    return () => window.removeEventListener("scroll", handleScroll)
+  }, [])
+
   const handleStartTrial = () => {
     setShowDialog(true)
     setStep("info")
+    setSubmitError("")
   }
 
-  const handleInfoSubmit = (e: React.FormEvent) => {
+  const handleInfoSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setStep("purpose")
+    setSubmitError("")
+    setIsSubmitting(true)
+
+    try {
+      // Send data to ActiveCampaign
+      const response = await fetch("/api/activecampaign", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: userInfo.email,
+          firstName: userInfo.firstName,
+          lastName: userInfo.lastName,
+          company: userInfo.company,
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error("Failed to submit")
+      }
+
+      // On success, move to purpose selection
+      setStep("purpose")
+    } catch (error) {
+      setSubmitError("We couldn't start your trial right now. Please try again.")
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   const handlePurposeSelect = (purpose: string) => {
@@ -91,23 +131,23 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0a1a]">
+    <div className="min-h-screen bg-gradient-to-b from-[#05030D] via-[#12071F] to-[#1A0B2E]">
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
-        <DialogContent className="bg-gradient-to-br from-[#1a0b2e] to-[#0f0520] border-2 border-purple-500/30 text-white max-w-md shadow-2xl shadow-purple-900/50 backdrop-blur-xl">
+        <DialogContent className="bg-gradient-to-br from-[#1a0b2e] to-[#0f0520] border-2 border-purple-500/30 text-white max-w-md shadow-[0_0_50px_rgba(168,85,247,0.4)] backdrop-blur-xl rounded-2xl animate-scale-in">
           {step === "info" ? (
             <div className="space-y-6">
-              <div className="flex items-center justify-between">
-                <h3 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-purple-400 font-heading">
-                  Start Your Trial
-                </h3>
+              <div className="space-y-2">
                 <button
                   onClick={() => setShowDialog(false)}
-                  className="text-white/60 hover:text-white transition-colors p-2 hover:bg-white/10 rounded-lg"
+                  className="absolute top-4 right-4 text-white/60 hover:text-white transition-all p-2 hover:bg-white/10 rounded-lg hover:scale-110"
                 >
                   <X className="h-5 w-5" />
                 </button>
+                <h3 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-purple-400 font-heading">
+                  Start Your Trial
+                </h3>
+                <p className="text-white/70 text-sm">Experience the power of AI receptionist for your business</p>
               </div>
-              <p className="text-white/70 text-sm">Experience the power of AI receptionist for your business</p>
               <form onSubmit={handleInfoSubmit} className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
@@ -119,7 +159,7 @@ export default function Home() {
                       required
                       value={userInfo.firstName}
                       onChange={(e) => setUserInfo({ ...userInfo, firstName: e.target.value })}
-                      className="bg-white/5 border-purple-500/30 text-white placeholder:text-white/40 focus:border-purple-400 focus:ring-2 focus:ring-purple-500/20 rounded-xl backdrop-blur-sm"
+                      className="bg-white/5 border-purple-500/30 text-white placeholder:text-white/40 focus:border-purple-400 focus:ring-2 focus:ring-purple-500/20 rounded-xl backdrop-blur-sm transition-all hover:border-purple-400/50"
                       placeholder="John"
                     />
                   </div>
@@ -132,7 +172,7 @@ export default function Home() {
                       required
                       value={userInfo.lastName}
                       onChange={(e) => setUserInfo({ ...userInfo, lastName: e.target.value })}
-                      className="bg-white/5 border-purple-500/30 text-white placeholder:text-white/40 focus:border-purple-400 focus:ring-2 focus:ring-purple-500/20 rounded-xl backdrop-blur-sm"
+                      className="bg-white/5 border-purple-500/30 text-white placeholder:text-white/40 focus:border-purple-400 focus:ring-2 focus:ring-purple-500/20 rounded-xl backdrop-blur-sm transition-all hover:border-purple-400/50"
                       placeholder="Doe"
                     />
                   </div>
@@ -147,7 +187,7 @@ export default function Home() {
                     required
                     value={userInfo.email}
                     onChange={(e) => setUserInfo({ ...userInfo, email: e.target.value })}
-                    className="bg-white/5 border-purple-500/30 text-white placeholder:text-white/40 focus:border-purple-400 focus:ring-2 focus:ring-purple-500/20 rounded-xl backdrop-blur-sm"
+                    className="bg-white/5 border-purple-500/30 text-white placeholder:text-white/40 focus:border-purple-400 focus:ring-2 focus:ring-purple-500/20 rounded-xl backdrop-blur-sm transition-all hover:border-purple-400/50"
                     placeholder="john@company.com"
                   />
                 </div>
@@ -160,36 +200,42 @@ export default function Home() {
                     required
                     value={userInfo.company}
                     onChange={(e) => setUserInfo({ ...userInfo, company: e.target.value })}
-                    className="bg-white/5 border-purple-500/30 text-white placeholder:text-white/40 focus:border-purple-400 focus:ring-2 focus:ring-purple-500/20 rounded-xl backdrop-blur-sm"
+                    className="bg-white/5 border-purple-500/30 text-white placeholder:text-white/40 focus:border-purple-400 focus:ring-2 focus:ring-purple-500/20 rounded-xl backdrop-blur-sm transition-all hover:border-purple-400/50"
                     placeholder="Your Business"
                   />
                 </div>
+                {submitError && (
+                  <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-3 text-sm text-red-400">
+                    {submitError}
+                  </div>
+                )}
                 <Button
                   type="submit"
-                  className="w-full bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white font-bold py-6 rounded-xl shadow-lg shadow-purple-900/30 transition-all hover:scale-105"
+                  disabled={isSubmitting}
+                  className="w-full bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white font-bold py-6 rounded-xl shadow-lg shadow-purple-900/30 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Continue
+                  {isSubmitting ? "Submitting..." : "Continue"}
                 </Button>
               </form>
             </div>
           ) : (
             <div className="space-y-6">
-              <div className="flex items-center justify-between">
-                <h3 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-purple-400 font-heading">
-                  Select Your Industry
-                </h3>
+              <div className="space-y-2">
                 <button
                   onClick={() => setShowDialog(false)}
-                  className="text-white/60 hover:text-white transition-colors p-2 hover:bg-white/10 rounded-lg"
+                  className="absolute top-4 right-4 text-white/60 hover:text-white transition-all p-2 hover:bg-white/10 rounded-lg hover:scale-110"
                 >
                   <X className="h-5 w-5" />
                 </button>
+                <h3 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-purple-400 font-heading">
+                  Select Your Industry
+                </h3>
+                <p className="text-white/70">Choose the industry that best matches your business:</p>
               </div>
-              <p className="text-white/70">Choose the industry that best matches your business:</p>
               <div className="grid grid-cols-2 gap-4">
                 <button
                   onClick={() => handlePurposeSelect("Home Services")}
-                  className="group relative p-8 bg-gradient-to-br from-white/5 to-white/[0.02] border border-purple-500/30 rounded-2xl hover:border-purple-400 transition-all hover:scale-105 text-center overflow-hidden shadow-lg hover:shadow-purple-900/30"
+                  className="group relative p-8 bg-gradient-to-br from-white/5 to-white/[0.02] border border-purple-500/30 rounded-2xl hover:border-purple-400 transition-all hover:scale-105 active:scale-95 text-center overflow-hidden shadow-lg hover:shadow-purple-900/30"
                 >
                   <div className="absolute inset-0 bg-gradient-to-br from-purple-600/0 to-pink-600/0 group-hover:from-purple-600/10 group-hover:to-pink-600/10 transition-all" />
                   <div className="relative">
@@ -199,7 +245,7 @@ export default function Home() {
                 </button>
                 <button
                   onClick={() => handlePurposeSelect("Pro Services")}
-                  className="group relative p-8 bg-gradient-to-br from-white/5 to-white/[0.02] border border-purple-500/30 rounded-2xl hover:border-purple-400 transition-all hover:scale-105 text-center overflow-hidden shadow-lg hover:shadow-purple-900/30"
+                  className="group relative p-8 bg-gradient-to-br from-white/5 to-white/[0.02] border border-purple-500/30 rounded-2xl hover:border-purple-400 transition-all hover:scale-105 active:scale-95 text-center overflow-hidden shadow-lg hover:shadow-purple-900/30"
                 >
                   <div className="absolute inset-0 bg-gradient-to-br from-purple-600/0 to-pink-600/0 group-hover:from-purple-600/10 group-hover:to-pink-600/10 transition-all" />
                   <div className="relative">
@@ -209,7 +255,7 @@ export default function Home() {
                 </button>
                 <button
                   onClick={() => handlePurposeSelect("Restaurants")}
-                  className="group relative p-8 bg-gradient-to-br from-white/5 to-white/[0.02] border border-purple-500/30 rounded-2xl hover:border-purple-400 transition-all hover:scale-105 text-center overflow-hidden shadow-lg hover:shadow-purple-900/30"
+                  className="group relative p-8 bg-gradient-to-br from-white/5 to-white/[0.02] border border-purple-500/30 rounded-2xl hover:border-purple-400 transition-all hover:scale-105 active:scale-95 text-center overflow-hidden shadow-lg hover:shadow-purple-900/30"
                 >
                   <div className="absolute inset-0 bg-gradient-to-br from-purple-600/0 to-pink-600/0 group-hover:from-purple-600/10 group-hover:to-pink-600/10 transition-all" />
                   <div className="relative">
@@ -219,7 +265,7 @@ export default function Home() {
                 </button>
                 <button
                   onClick={() => handlePurposeSelect("Clinics")}
-                  className="group relative p-8 bg-gradient-to-br from-white/5 to-white/[0.02] border border-purple-500/30 rounded-2xl hover:border-purple-400 transition-all hover:scale-105 text-center overflow-hidden shadow-lg hover:shadow-purple-900/30"
+                  className="group relative p-8 bg-gradient-to-br from-white/5 to-white/[0.02] border border-purple-500/30 rounded-2xl hover:border-purple-400 transition-all hover:scale-105 active:scale-95 text-center overflow-hidden shadow-lg hover:shadow-purple-900/30"
                 >
                   <div className="absolute inset-0 bg-gradient-to-br from-purple-600/0 to-pink-600/0 group-hover:from-purple-600/10 group-hover:to-pink-600/10 transition-all" />
                   <div className="relative">
@@ -233,7 +279,13 @@ export default function Home() {
         </DialogContent>
       </Dialog>
 
-      <header className="border-b border-white/10 bg-[#232323]">
+      <header
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+          isScrolled
+            ? "bg-[#0B0B14] border-b border-white/10 shadow-lg shadow-black/20"
+            : "bg-transparent backdrop-blur-md border-b border-white/5"
+        }`}
+      >
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Image
@@ -247,20 +299,20 @@ export default function Home() {
           <nav className="flex items-center gap-6">
             <Link
               href="#how-it-works"
-              className="text-sm text-white/70 hover:text-[#E1F404] transition-colors hidden md:block"
+              className="text-sm text-white/70 hover:text-purple-400 transition-colors hidden md:block"
             >
               How It Works
             </Link>
             <Link
               href="#industries"
-              className="text-sm text-white/70 hover:text-[#E1F404] transition-colors hidden md:block"
+              className="text-sm text-white/70 hover:text-purple-400 transition-colors hidden md:block"
             >
               Industries
             </Link>
             <Button
               onClick={handleStartTrial}
               size="sm"
-              className="bg-[#E1F404] hover:bg-[#E1F404]/90 text-[#232323] font-semibold"
+              className="bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white font-semibold shadow-lg shadow-purple-900/30 transition-all hover:scale-105 active:scale-95 rounded-lg"
             >
               Try the AI Assistant
             </Button>
@@ -268,12 +320,12 @@ export default function Home() {
         </div>
       </header>
 
-      <main>
+      <main className="pt-20">
         <section className="relative overflow-hidden">
           <div className="absolute inset-0 z-0">
             <Image src="/professional-desk-hero.png" alt="" fill className="object-cover opacity-20" />
           </div>
-          <div className="absolute inset-0 bg-gradient-to-b from-[#0a0a1a] via-[#1a0a2e]/95 to-[#0a0a1a] z-[1]" />
+          <div className="absolute inset-0 bg-gradient-to-b from-[#05030D] via-[#12071F]/95 to-[#1A0B2E] z-[1]" />
 
           <div className="absolute inset-0 z-[2] opacity-10">
             <div className="absolute top-20 left-10 w-72 h-72 bg-purple-500/20 rounded-full blur-3xl animate-pulse" />
@@ -283,13 +335,12 @@ export default function Home() {
           <div className="container mx-auto px-4 py-24 md:py-36 relative z-10">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center max-w-7xl mx-auto">
               <div className="space-y-10">
-                <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/5 border border-purple-500/30 rounded-full text-sm backdrop-blur-sm">
-                  <div className="flex -space-x-2">
-                    <div className="h-6 w-6 rounded-full bg-purple-400 border-2 border-[#0a0a1a]" />
-                    <div className="h-6 w-6 rounded-full bg-pink-400 border-2 border-[#0a0a1a]" />
-                    <div className="h-6 w-6 rounded-full bg-blue-400 border-2 border-[#0a0a1a]" />
-                  </div>
-                  <span className="text-white/80">Trusted by 500+ small businesses</span>
+                <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/30 rounded-full text-sm backdrop-blur-sm shadow-lg shadow-purple-900/20">
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75" />
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-purple-500" />
+                  </span>
+                  <span className="text-white/90 font-medium">Early access — Be among the first to try AIGENCEE</span>
                 </div>
 
                 <h1 className="text-6xl md:text-7xl lg:text-8xl font-bold text-white leading-[0.95] font-heading tracking-tight">
@@ -312,20 +363,20 @@ export default function Home() {
                     <Button
                       onClick={handleStartTrial}
                       size="lg"
-                      className="bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white font-bold text-lg px-10 py-7 h-auto rounded-xl shadow-2xl shadow-purple-500/30 border border-white/10"
+                      className="bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white font-bold text-lg px-10 py-7 h-auto rounded-2xl shadow-[0_0_40px_rgba(168,85,247,0.3)] border border-white/10 transition-all hover:scale-105 active:scale-95 hover:shadow-[0_0_60px_rgba(168,85,247,0.5)]"
                     >
                       Try It Free Now
                     </Button>
                     <Button
                       size="lg"
                       variant="outline"
-                      className="border-2 border-white/20 text-white hover:bg-white/10 font-semibold text-lg px-10 py-7 h-auto rounded-xl backdrop-blur-sm bg-transparent"
+                      className="border-2 border-white/20 text-white hover:bg-white/10 font-semibold text-lg px-10 py-7 h-auto rounded-2xl backdrop-blur-sm bg-transparent transition-all hover:scale-105 active:scale-95"
                       onClick={() => document.getElementById("how-it-works")?.scrollIntoView({ behavior: "smooth" })}
                     >
                       See How It Works
                     </Button>
                   </div>
-                  <p className="text-sm text-pink-400 flex items-center gap-2">
+                  <p className="text-sm text-pink-400 flex items-center gap-2 font-medium">
                     <span className="relative flex h-2 w-2">
                       <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-pink-400 opacity-75" />
                       <span className="relative inline-flex rounded-full h-2 w-2 bg-pink-500" />
@@ -340,7 +391,7 @@ export default function Home() {
                 <div className="relative bg-[#0a0a1a] border border-white/20 rounded-2xl shadow-2xl overflow-hidden backdrop-blur-xl">
                   <div className="bg-white/5 border-b border-white/10 px-4 py-3 flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <div className="bg-[#31A6A7] text-white px-3 py-1 rounded-lg text-sm flex items-center gap-1 font-medium">
+                      <div className="bg-gradient-to-r from-purple-500 to-pink-600 text-white px-3 py-1 rounded-lg text-sm flex items-center gap-1 font-medium shadow-lg">
                         <MessageSquare className="h-3 w-3" />
                         AI
                       </div>
@@ -364,7 +415,9 @@ export default function Home() {
                       >
                         <div
                           className={`${
-                            msg.role === "user" ? "bg-[#E1F404] text-[#232323]" : "bg-white/10 text-white"
+                            msg.role === "user"
+                              ? "bg-gradient-to-r from-purple-500 to-pink-600 text-white shadow-lg shadow-purple-900/30"
+                              : "bg-white/10 text-white"
                           } backdrop-blur-sm rounded-2xl px-5 py-3 max-w-xs`}
                         >
                           <p className="text-sm">{msg.text}</p>
@@ -397,11 +450,11 @@ export default function Home() {
                       <input
                         type="text"
                         placeholder="Type a message..."
-                        className="flex-1 px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-sm text-white placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-[#E1F404]"
+                        className="flex-1 px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-sm text-white placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-400 transition-all"
                         disabled
                       />
-                      <button className="bg-[#E1F404] hover:bg-[#E1F404]/90 text-[#232323] p-3 rounded-xl">
-                        <Send className="h-5 w-5" />
+                      <button className="bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white p-3 rounded-xl transition-all hover:scale-110 active:scale-95 shadow-lg shadow-purple-900/30">
+                        <Send className="h-4 w-4" />
                       </button>
                     </div>
                   </div>
@@ -409,13 +462,9 @@ export default function Home() {
               </div>
             </div>
           </div>
-
-          <div className="absolute bottom-12 left-1/2 -translate-x-1/2 z-10 animate-bounce">
-            <ChevronDown className="h-10 w-10 text-purple-400/60" />
-          </div>
         </section>
 
-        <section className="py-16 bg-gradient-to-b from-[#0a0a1a] to-[#1a0a2e] border-y border-white/5">
+        {/* <section className="py-16 bg-gradient-to-b from-[#0a0a1a] to-[#1a0a2e] border-y border-white/5">
           <div className="container mx-auto px-4">
             <p className="text-center text-white/40 text-sm uppercase tracking-wider mb-8 font-mono">
               Trusted by leading businesses
@@ -428,7 +477,7 @@ export default function Home() {
               <div className="text-white/60 text-2xl font-bold">LYFT</div>
             </div>
           </div>
-        </section>
+        </section> */}
 
         <section className="py-28 md:py-36 bg-[#1a0a2e] relative overflow-hidden">
           <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-purple-500 to-transparent opacity-50" />
@@ -806,7 +855,7 @@ export default function Home() {
         </section>
       </main>
 
-      <footer className="border-t border-white/10 py-12 bg-[#1a1a1a]">
+      <footer className="border-t border-white/10 py-12 bg-[#1a1a1a] opacity-100 bg-foreground">
         <div className="container mx-auto px-4">
           <div className="flex flex-col md:flex-row justify-between items-center gap-6">
             <div className="flex items-center gap-2">
