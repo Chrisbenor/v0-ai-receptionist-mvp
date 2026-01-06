@@ -312,7 +312,7 @@ export default function Home() {
               alt="AIGENCEE"
               width={140}
               height={32}
-              className="w-auto brightness-0 invert h-4"
+              className="brightness-0 invert h-4 w-28"
             />
           </div>
           <nav className="flex items-center gap-6">

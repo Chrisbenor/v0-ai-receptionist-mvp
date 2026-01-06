@@ -22,11 +22,11 @@ export async function POST(request: Request) {
       })
     }
 
-    let AC_API_URL: string
+    let AC_BASE_URL: string
     if (AC_ACCOUNT.includes("api-us1.com") || AC_ACCOUNT.includes(".com")) {
-      AC_API_URL = `https://${AC_ACCOUNT}/api/3/contacts`
+      AC_BASE_URL = `https://${AC_ACCOUNT}/api/3`
     } else {
-      AC_API_URL = `https://${AC_ACCOUNT}.api-us1.com/api/3/contacts`
+      AC_BASE_URL = `https://${AC_ACCOUNT}.api-us1.com/api/3`
     }
 
     const controller = new AbortController()
@@ -34,52 +34,93 @@ export async function POST(request: Request) {
 
     try {
       const fieldValues = []
-
-      // Field ID 1 = Company Name
       if (company) {
-        fieldValues.push({
-          field: "1",
-          value: company,
-        })
+        fieldValues.push({ field: "1", value: company })
       }
-
       if (industry) {
-        fieldValues.push({
-          field: "2",
-          value: industry,
-        })
+        fieldValues.push({ field: "2", value: industry })
       }
 
-      const response = await fetch(AC_API_URL, {
-        method: "POST",
+      const searchResponse = await fetch(`${AC_BASE_URL}/contacts?email=${encodeURIComponent(email)}`, {
+        method: "GET",
         headers: {
-          "Content-Type": "application/json",
           "Api-Token": AC_API_KEY,
         },
-        body: JSON.stringify({
-          contact: {
-            email,
-            firstName,
-            lastName,
-            fieldValues,
-          },
-        }),
         signal: controller.signal,
       })
 
-      clearTimeout(timeoutId)
+      let contactId: string | null = null
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}))
-        return NextResponse.json({
-          success: true,
-          message: "Data received - ActiveCampaign sync pending",
-          data: { email, firstName, lastName, company, industry },
-        })
+      if (searchResponse.ok) {
+        const searchData = await searchResponse.json()
+        if (searchData.contacts && searchData.contacts.length > 0) {
+          contactId = searchData.contacts[0].id
+        }
       }
 
-      const data = await response.json()
-      return NextResponse.json({ success: true, data })
+      if (contactId) {
+        // Update existing contact
+        const updateResponse = await fetch(`${AC_BASE_URL}/contacts/${contactId}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            "Api-Token": AC_API_KEY,
+          },
+          body: JSON.stringify({
+            contact: {
+              email,
+              firstName,
+              lastName,
+              fieldValues,
+            },
+          }),
+          signal: controller.signal,
+        })
+
+        clearTimeout(timeoutId)
+
+        if (!updateResponse.ok) {
+          return NextResponse.json({
+            success: true,
+            message: "Data received - ActiveCampaign sync pending",
+            data: { email, firstName, lastName, company, industry },
+          })
+        }
+
+        const data = await updateResponse.json()
+        return NextResponse.json({ success: true, data })
+      } else {
+        // Create new contact
+        const createResponse = await fetch(`${AC_BASE_URL}/contacts`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Api-Token": AC_API_KEY,
+          },
+          body: JSON.stringify({
+            contact: {
+              email,
+              firstName,
+              lastName,
+              fieldValues,
+            },
+          }),
+          signal: controller.signal,
+        })
+
+        clearTimeout(timeoutId)
+
+        if (!createResponse.ok) {
+          return NextResponse.json({
+            success: true,
+            message: "Data received - ActiveCampaign sync pending",
+            data: { email, firstName, lastName, company, industry },
+          })
+        }
+
+        const data = await createResponse.json()
+        return NextResponse.json({ success: true, data })
+      }
     } catch (fetchError) {
       clearTimeout(timeoutId)
       return NextResponse.json({
