@@ -351,8 +351,8 @@ export default function Home() {
             <div className="absolute bottom-20 right-10 w-96 h-96 bg-pink-500/20 rounded-full blur-3xl animate-pulse delay-1000" />
           </div>
 
-          <div className="container mx-auto px-4 py-24 md:py-36 relative z-10">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center max-w-7xl mx-auto">
+          <div className="container mx-auto px-4 py-24 relative z-10 md:py-[50px]">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center max-w-7xl mx-auto leading-[2.05rem]">
               <div className="space-y-10">
                 <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/30 rounded-full text-sm backdrop-blur-sm shadow-lg shadow-purple-900/20">
                   <span className="relative flex h-2 w-2">
