@@ -2,7 +2,7 @@ import { NextResponse } from "next/server"
 
 export async function POST(request: Request) {
   try {
-    const { email, firstName, lastName, company } = await request.json()
+    const { email, firstName, lastName, company, industry } = await request.json()
 
     const AC_ACCOUNT = process.env.ACTIVECAMPAIGN_ACCOUNT
     const AC_API_KEY = process.env.ACTIVECAMPAIGN_API_KEY
@@ -18,16 +18,14 @@ export async function POST(request: Request) {
       return NextResponse.json({
         success: true,
         message: "Demo mode - ActiveCampaign integration not fully configured",
-        data: { email, firstName, lastName, company },
+        data: { email, firstName, lastName, company, industry },
       })
     }
 
     let AC_API_URL: string
     if (AC_ACCOUNT.includes("api-us1.com") || AC_ACCOUNT.includes(".com")) {
-      // Account is already a full domain
       AC_API_URL = `https://${AC_ACCOUNT}/api/3/contacts`
     } else {
-      // Account is just the subdomain
       AC_API_URL = `https://${AC_ACCOUNT}.api-us1.com/api/3/contacts`
     }
 
@@ -35,6 +33,23 @@ export async function POST(request: Request) {
     const timeoutId = setTimeout(() => controller.abort(), 10000)
 
     try {
+      const fieldValues = []
+
+      // Field ID 1 = Company Name
+      if (company) {
+        fieldValues.push({
+          field: "1",
+          value: company,
+        })
+      }
+
+      if (industry) {
+        fieldValues.push({
+          field: "2",
+          value: industry,
+        })
+      }
+
       const response = await fetch(AC_API_URL, {
         method: "POST",
         headers: {
@@ -46,12 +61,7 @@ export async function POST(request: Request) {
             email,
             firstName,
             lastName,
-            fieldValues: [
-              {
-                field: "1",
-                value: company,
-              },
-            ],
+            fieldValues,
           },
         }),
         signal: controller.signal,
@@ -61,11 +71,10 @@ export async function POST(request: Request) {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}))
-        console.error("[v0] ActiveCampaign API error:", errorData)
         return NextResponse.json({
           success: true,
           message: "Data received - ActiveCampaign sync pending",
-          data: { email, firstName, lastName, company },
+          data: { email, firstName, lastName, company, industry },
         })
       }
 
@@ -73,15 +82,13 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: true, data })
     } catch (fetchError) {
       clearTimeout(timeoutId)
-      console.error("[v0] ActiveCampaign fetch error:", fetchError)
       return NextResponse.json({
         success: true,
         message: "Data received - will sync when connection is restored",
-        data: { email, firstName, lastName, company },
+        data: { email, firstName, lastName, company, industry },
       })
     }
   } catch (error) {
-    console.error("[v0] ActiveCampaign route error:", error)
     return NextResponse.json({
       success: true,
       message: "Your information has been received",

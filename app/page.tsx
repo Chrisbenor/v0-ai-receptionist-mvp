@@ -91,7 +91,6 @@ export default function Home() {
     setIsSubmitting(true)
 
     try {
-      // Send data to ActiveCampaign
       const response = await fetch("/api/activecampaign", {
         method: "POST",
         headers: {
@@ -102,6 +101,7 @@ export default function Home() {
           firstName: userInfo.firstName,
           lastName: userInfo.lastName,
           company: userInfo.company,
+          isInitialSubmit: true,
         }),
       })
 
@@ -118,14 +118,33 @@ export default function Home() {
     }
   }
 
-  const handlePurposeSelect = (purpose: string) => {
-    setUserInfo({ ...userInfo, company: purpose })
+  const handlePurposeSelect = async (purpose: string) => {
+    try {
+      await fetch("/api/activecampaign", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: userInfo.email,
+          firstName: userInfo.firstName,
+          lastName: userInfo.lastName,
+          company: userInfo.company,
+          industry: purpose, // Send industry as separate field
+          isUpdate: true,
+        }),
+      })
+    } catch (error) {
+      console.error("[v0] Failed to update industry:", error)
+    }
+
     // Redirect to chat with params
     const params = new URLSearchParams({
       firstName: userInfo.firstName,
       lastName: userInfo.lastName,
       email: userInfo.email,
-      company: purpose,
+      company: userInfo.company,
+      industry: purpose, // Pass industry in URL params
     })
     window.location.href = `/chat?${params.toString()}`
   }
