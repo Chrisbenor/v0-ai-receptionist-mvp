@@ -75,6 +75,13 @@ export default function ChatPage() {
     initVoice()
   }, [])
 
+  useEffect(() => {
+    document.body.classList.add("overflow-hidden")
+    return () => {
+      document.body.classList.remove("overflow-hidden")
+    }
+  }, [])
+
   const sendMessage = async (content: string, additionalInfo?: { name?: string; email?: string }) => {
     stopSpeaking()
 
@@ -166,10 +173,10 @@ export default function ChatPage() {
   const showQuickReplies = lastMessage?.role === "assistant" && lastMessage?.suggestedActions && !isLoading
 
   return (
-    <div className="flex flex-col h-screen bg-gradient-to-br from-[#0f0520] via-[#1a0b2e] to-[#0f0520]">
+    <div className="h-[100dvh] overflow-hidden flex flex-col bg-gradient-to-br from-[#0f0520] via-[#1a0b2e] to-[#0f0520]">
       <ChatHeader />
 
-      <div className="flex-1 overflow-y-auto px-4 py-8 space-y-6">
+      <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-4 py-8 space-y-6">
         {messages.map((message) => (
           <div key={message.id}>
             <ChatMessage message={message} />
@@ -184,30 +191,34 @@ export default function ChatPage() {
         <div ref={messagesEndRef} />
       </div>
 
-      <div className="px-4 py-2 flex justify-center">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={toggleVoice}
-          className="text-purple-300 hover:text-white hover:bg-purple-500/20 transition-all"
-        >
-          {voiceEnabled ? (
-            <>
-              <Volume2 className="h-4 w-4 mr-2" />
-              Voice on
-            </>
-          ) : (
-            <>
-              <VolumeX className="h-4 w-4 mr-2" />
-              Voice off
-            </>
-          )}
-        </Button>
+      <div className="sticky bottom-0 z-20 w-full border-t border-purple-500/20 bg-gradient-to-r from-[#1a0b2e] via-[#2d1b4e] to-[#1a0b2e] backdrop-blur-xl shadow-2xl shadow-purple-900/30">
+        <div className="px-4 pt-2 pb-1 flex justify-center border-b border-purple-500/10">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={toggleVoice}
+            className="text-purple-300 hover:text-white hover:bg-purple-500/20 transition-all h-8"
+          >
+            {voiceEnabled ? (
+              <>
+                <Volume2 className="h-4 w-4 mr-2" />
+                Voice on
+              </>
+            ) : (
+              <>
+                <VolumeX className="h-4 w-4 mr-2" />
+                Voice off
+              </>
+            )}
+          </Button>
+        </div>
+
+        {showQuickReplies && <QuickReplies actions={lastMessage.suggestedActions!} onSelect={handleQuickReply} />}
+
+        <div className="px-4 py-3 pb-[calc(env(safe-area-inset-bottom)+12px)]">
+          <ChatInput onSend={sendMessage} disabled={isLoading} />
+        </div>
       </div>
-
-      {showQuickReplies && <QuickReplies actions={lastMessage.suggestedActions!} onSelect={handleQuickReply} />}
-
-      <ChatInput onSend={sendMessage} disabled={isLoading} />
     </div>
   )
 }
