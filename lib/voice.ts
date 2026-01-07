@@ -10,6 +10,8 @@ export interface VoiceRecognitionOptions {
 
 let recognition: any = null
 let synthesis: SpeechSynthesis | null = null
+let voicesLoaded = false
+let availableVoices: SpeechSynthesisVoice[] = []
 
 export function initVoice() {
   if (typeof window === "undefined") return
@@ -25,6 +27,20 @@ export function initVoice() {
 
   // Initialize speech synthesis
   synthesis = window.speechSynthesis
+
+  if (synthesis) {
+    const loadVoices = () => {
+      availableVoices = synthesis!.getVoices()
+      voicesLoaded = availableVoices.length > 0
+    }
+
+    loadVoices()
+
+    // Some browsers load voices asynchronously
+    if (synthesis.onvoiceschanged !== undefined) {
+      synthesis.onvoiceschanged = loadVoices
+    }
+  }
 }
 
 export function isVoiceSupported(): boolean {
@@ -73,12 +89,16 @@ export function stopListening(): void {
 
 export function speak(text: string, onEnd?: () => void): void {
   if (!synthesis) {
-    console.warn("[v0] Speech synthesis not available")
     return
   }
 
   // Cancel any ongoing speech
   synthesis.cancel()
+
+  if (!voicesLoaded) {
+    availableVoices = synthesis.getVoices()
+    voicesLoaded = availableVoices.length > 0
+  }
 
   const utterance = new SpeechSynthesisUtterance(text)
   utterance.rate = 1.0
@@ -86,17 +106,25 @@ export function speak(text: string, onEnd?: () => void): void {
   utterance.volume = 1.0
   utterance.lang = "en-US"
 
-  const voices = synthesis.getVoices()
-  const englishVoice =
-    voices.find((voice) => voice.lang.startsWith("en-") && voice.name.includes("Google")) ||
-    voices.find((voice) => voice.lang.startsWith("en-"))
+  if (voicesLoaded && availableVoices.length > 0) {
+    const englishVoice =
+      availableVoices.find((voice) => voice.lang === "en-US" && voice.name.includes("Google")) ||
+      availableVoices.find((voice) => voice.lang === "en-US") ||
+      availableVoices.find((voice) => voice.lang.startsWith("en-"))
 
-  if (englishVoice) {
-    utterance.voice = englishVoice
+    if (englishVoice) {
+      utterance.voice = englishVoice
+    }
   }
 
   if (onEnd) {
     utterance.onend = onEnd
+  }
+
+  utterance.onerror = (event) => {
+    if (event.error !== "interrupted" && event.error !== "canceled") {
+      console.error("[v0] Speech synthesis error:", event.error)
+    }
   }
 
   synthesis.speak(utterance)

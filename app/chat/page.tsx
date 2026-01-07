@@ -11,7 +11,7 @@ import { QuickReplies } from "@/components/quick-replies"
 import { ContactForm } from "@/components/contact-form"
 import { TypingIndicator } from "@/components/typing-indicator"
 import { BookingConfirmation } from "@/components/booking-confirmation"
-import { speak, stopSpeaking } from "@/lib/voice"
+import { speak, stopSpeaking, initVoice } from "@/lib/voice"
 
 export type MessageType = "faq" | "clarify" | "book_confirmed" | "book_unavailable" | "escalate" | "error"
 
@@ -71,6 +71,10 @@ export default function ChatPage() {
     scrollToBottom()
   }, [messages, isLoading])
 
+  useEffect(() => {
+    initVoice()
+  }, [])
+
   const sendMessage = async (content: string, additionalInfo?: { name?: string; email?: string }) => {
     stopSpeaking()
 
@@ -116,7 +120,9 @@ export default function ChatPage() {
         setMessages((prev) => [...prev, assistantMessage])
 
         if (voiceEnabled) {
-          speak(data.message)
+          setTimeout(() => {
+            speak(data.message)
+          }, 100)
         }
 
         if (data.type === "escalate" && !userInfo.name && !additionalInfo?.name) {
