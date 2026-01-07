@@ -10,9 +10,10 @@ import { startListening, stopListening, isVoiceSupported, initVoice } from "@/li
 interface ChatInputProps {
   onSend: (message: string) => void
   disabled?: boolean
+  voiceMode?: boolean
 }
 
-export function ChatInput({ onSend, disabled }: ChatInputProps) {
+export function ChatInput({ onSend, disabled, voiceMode = false }: ChatInputProps) {
   const [input, setInput] = useState("")
   const [isListening, setIsListening] = useState(false)
   const [voiceSupported, setVoiceSupported] = useState(false)
@@ -27,6 +28,12 @@ export function ChatInput({ onSend, disabled }: ChatInputProps) {
     if (input.trim() && !disabled) {
       onSend(input.trim())
       setInput("")
+
+      if (voiceMode && !isListening) {
+        setTimeout(() => {
+          handleVoiceStart()
+        }, 500)
+      }
     }
   }
 
@@ -37,31 +44,59 @@ export function ChatInput({ onSend, disabled }: ChatInputProps) {
     }
   }
 
+  const handleVoiceStart = () => {
+    startListening({
+      onResult: (transcript) => {
+        setInput(transcript)
+        setIsListening(false)
+        // Auto-send the transcribed message
+        setTimeout(() => {
+          onSend(transcript)
+          setInput("")
+          if (voiceMode) {
+            setTimeout(() => {
+              handleVoiceStart()
+            }, 500)
+          }
+        }, 100)
+      },
+      onError: (error) => {
+        setIsListening(false)
+        if (voiceMode && error !== "not-allowed") {
+          setTimeout(() => {
+            handleVoiceStart()
+          }, 1000)
+        }
+      },
+      onEnd: () => {
+        setIsListening(false)
+        if (voiceMode) {
+          setTimeout(() => {
+            handleVoiceStart()
+          }, 500)
+        }
+      },
+    })
+    setIsListening(true)
+  }
+
   const handleVoiceToggle = () => {
     if (isListening) {
       stopListening()
       setIsListening(false)
     } else {
-      startListening({
-        onResult: (transcript) => {
-          setInput(transcript)
-          setIsListening(false)
-          // Auto-send the transcribed message
-          setTimeout(() => {
-            onSend(transcript)
-            setInput("")
-          }, 100)
-        },
-        onError: (error) => {
-          setIsListening(false)
-        },
-        onEnd: () => {
-          setIsListening(false)
-        },
-      })
-      setIsListening(true)
+      handleVoiceStart()
     }
   }
+
+  useEffect(() => {
+    if (voiceMode && !isListening && !disabled) {
+      handleVoiceStart()
+    } else if (!voiceMode && isListening) {
+      stopListening()
+      setIsListening(false)
+    }
+  }, [voiceMode])
 
   return (
     <form onSubmit={handleSubmit} className="max-w-4xl mx-auto">

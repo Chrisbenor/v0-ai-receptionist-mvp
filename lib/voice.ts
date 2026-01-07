@@ -101,14 +101,17 @@ export function speak(text: string, onEnd?: () => void): void {
   }
 
   const utterance = new SpeechSynthesisUtterance(text)
-  utterance.rate = 1.0
-  utterance.pitch = 1.0
+  utterance.rate = 0.95 // Slightly slower for clarity
+  utterance.pitch = 1.05 // Slightly higher for friendliness
   utterance.volume = 1.0
   utterance.lang = "en-US"
 
   if (voicesLoaded && availableVoices.length > 0) {
     const englishVoice =
-      availableVoices.find((voice) => voice.lang === "en-US" && voice.name.includes("Google")) ||
+      availableVoices.find((voice) => voice.lang === "en-US" && voice.name.includes("Samantha")) ||
+      availableVoices.find((voice) => voice.lang === "en-US" && voice.name.includes("Google US English")) ||
+      availableVoices.find((voice) => voice.lang === "en-US" && voice.name.includes("Microsoft Zira")) ||
+      availableVoices.find((voice) => voice.lang === "en-US" && !voice.name.includes("eSpeak")) ||
       availableVoices.find((voice) => voice.lang === "en-US") ||
       availableVoices.find((voice) => voice.lang.startsWith("en-"))
 

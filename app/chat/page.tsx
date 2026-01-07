@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react"
 import { useSearchParams } from "next/navigation"
-import { Volume2, VolumeX } from "lucide-react"
+import { Volume2, VolumeX, Mic, MicOff } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ChatHeader } from "@/components/chat-header"
 import { ChatMessage } from "@/components/chat-message"
@@ -57,6 +57,7 @@ export default function ChatPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [showContactForm, setShowContactForm] = useState(false)
   const [voiceEnabled, setVoiceEnabled] = useState(true)
+  const [voiceMode, setVoiceMode] = useState(false)
   const [userInfo, setUserInfo] = useState({
     name: firstName && lastName ? `${firstName} ${lastName}` : "",
     email: email || "",
@@ -169,6 +170,10 @@ export default function ChatPage() {
     setVoiceEnabled(!voiceEnabled)
   }
 
+  const toggleVoiceMode = () => {
+    setVoiceMode(!voiceMode)
+  }
+
   const lastMessage = messages[messages.length - 1]
   const showQuickReplies = lastMessage?.role === "assistant" && lastMessage?.suggestedActions && !isLoading
 
@@ -192,7 +197,29 @@ export default function ChatPage() {
       </div>
 
       <div className="sticky bottom-0 z-20 w-full border-t border-purple-500/20 bg-gradient-to-r from-[#1a0b2e] via-[#2d1b4e] to-[#1a0b2e] backdrop-blur-xl shadow-2xl shadow-purple-900/30">
-        <div className="px-4 pt-2 pb-1 flex justify-center border-b border-purple-500/10">
+        <div className="px-4 pt-2 pb-1 flex justify-center gap-3 border-b border-purple-500/10">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={toggleVoiceMode}
+            className={`transition-all h-8 ${
+              voiceMode
+                ? "text-white bg-purple-500/30 hover:bg-purple-500/40"
+                : "text-purple-300 hover:text-white hover:bg-purple-500/20"
+            }`}
+          >
+            {voiceMode ? (
+              <>
+                <Mic className="h-4 w-4 mr-2" />
+                Voice mode on
+              </>
+            ) : (
+              <>
+                <MicOff className="h-4 w-4 mr-2" />
+                Voice mode off
+              </>
+            )}
+          </Button>
           <Button
             variant="ghost"
             size="sm"
@@ -202,12 +229,12 @@ export default function ChatPage() {
             {voiceEnabled ? (
               <>
                 <Volume2 className="h-4 w-4 mr-2" />
-                Voice on
+                Audio on
               </>
             ) : (
               <>
                 <VolumeX className="h-4 w-4 mr-2" />
-                Voice off
+                Audio off
               </>
             )}
           </Button>
@@ -216,7 +243,7 @@ export default function ChatPage() {
         {showQuickReplies && <QuickReplies actions={lastMessage.suggestedActions!} onSelect={handleQuickReply} />}
 
         <div className="px-4 py-3 pb-[calc(env(safe-area-inset-bottom)+12px)]">
-          <ChatInput onSend={sendMessage} disabled={isLoading} />
+          <ChatInput onSend={sendMessage} disabled={isLoading} voiceMode={voiceMode} />
         </div>
       </div>
     </div>
