@@ -2,6 +2,8 @@
 
 import { useState, useRef, useEffect } from "react"
 import { useSearchParams } from "next/navigation"
+import { Volume2, VolumeX } from "lucide-react"
+import { Button } from "@/components/ui/button"
 import { ChatHeader } from "@/components/chat-header"
 import { ChatMessage } from "@/components/chat-message"
 import { ChatInput } from "@/components/chat-input"
@@ -9,6 +11,7 @@ import { QuickReplies } from "@/components/quick-replies"
 import { ContactForm } from "@/components/contact-form"
 import { TypingIndicator } from "@/components/typing-indicator"
 import { BookingConfirmation } from "@/components/booking-confirmation"
+import { speak, stopSpeaking } from "@/lib/voice"
 
 export type MessageType = "faq" | "clarify" | "book_confirmed" | "book_unavailable" | "escalate" | "error"
 
@@ -46,13 +49,14 @@ export default function ChatPage() {
       id: "1",
       role: "assistant",
       content: firstName
-        ? `Hi ${firstName}! Thanks for trying out AIGENCEE's AI Receptionist. I'm here to help you experience how we can assist ${companyName || "your business"} in the ${industry || "your"} industry. How can I help you today?`
-        : "Hi! I'm the virtual receptionist. How can I help you today?",
+        ? `Hi ${firstName}! Thanks for trying AIGENCEE's AI Receptionist. I'm here to answer calls and messages, book appointments, and route requests for ${companyName || "your business"}. How can I help you today?`
+        : "Hi! Thanks for trying AIGENCEE's AI Receptionist.\nI'm here to answer calls and messages, book appointments, and route requests for your business.\nHow can I help you today?",
       timestamp: new Date(),
     },
   ])
   const [isLoading, setIsLoading] = useState(false)
   const [showContactForm, setShowContactForm] = useState(false)
+  const [voiceEnabled, setVoiceEnabled] = useState(true)
   const [userInfo, setUserInfo] = useState({
     name: firstName && lastName ? `${firstName} ${lastName}` : "",
     email: email || "",
@@ -68,6 +72,8 @@ export default function ChatPage() {
   }, [messages, isLoading])
 
   const sendMessage = async (content: string, additionalInfo?: { name?: string; email?: string }) => {
+    stopSpeaking()
+
     const userMessage: Message = {
       id: Date.now().toString(),
       role: "user",
@@ -89,7 +95,7 @@ export default function ChatPage() {
           message: content,
           name: additionalInfo?.name || userInfo.name || undefined,
           email: additionalInfo?.email || userInfo.email || undefined,
-          timezone: "America/Los_Angeles",
+          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
           industry: industry || undefined,
         }),
       })
@@ -109,7 +115,10 @@ export default function ChatPage() {
 
         setMessages((prev) => [...prev, assistantMessage])
 
-        // Show contact form if escalated and no user info
+        if (voiceEnabled) {
+          speak(data.message)
+        }
+
         if (data.type === "escalate" && !userInfo.name && !additionalInfo?.name) {
           setShowContactForm(true)
         }
@@ -140,6 +149,13 @@ export default function ChatPage() {
     sendMessage(message, { name, email })
   }
 
+  const toggleVoice = () => {
+    if (voiceEnabled) {
+      stopSpeaking()
+    }
+    setVoiceEnabled(!voiceEnabled)
+  }
+
   const lastMessage = messages[messages.length - 1]
   const showQuickReplies = lastMessage?.role === "assistant" && lastMessage?.suggestedActions && !isLoading
 
@@ -160,6 +176,27 @@ export default function ChatPage() {
         {showContactForm && <ContactForm onSubmit={handleContactSubmit} onCancel={() => setShowContactForm(false)} />}
 
         <div ref={messagesEndRef} />
+      </div>
+
+      <div className="px-4 py-2 flex justify-center">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={toggleVoice}
+          className="text-purple-300 hover:text-white hover:bg-purple-500/20 transition-all"
+        >
+          {voiceEnabled ? (
+            <>
+              <Volume2 className="h-4 w-4 mr-2" />
+              Voice on
+            </>
+          ) : (
+            <>
+              <VolumeX className="h-4 w-4 mr-2" />
+              Voice off
+            </>
+          )}
+        </Button>
       </div>
 
       {showQuickReplies && <QuickReplies actions={lastMessage.suggestedActions!} onSelect={handleQuickReply} />}

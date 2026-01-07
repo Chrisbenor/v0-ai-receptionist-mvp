@@ -16,11 +16,14 @@ export function ChatHeader() {
           <div className="flex items-center gap-3">
             <Image src="/aigencee-logo.svg" alt="AIGENCEE" width={100} height={24} className="h-6 w-auto invert" />
             <div className="h-8 w-px bg-gradient-to-b from-transparent via-purple-500/50 to-transparent" />
-            <div className="flex items-center gap-2">
-              <div className="p-1.5 rounded-lg bg-gradient-to-br from-purple-600 to-pink-600">
-                <MessageSquare className="h-4 w-4 text-white" />
+            <div className="flex flex-col">
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 rounded-lg bg-gradient-to-br from-purple-600 to-pink-600">
+                  <MessageSquare className="h-4 w-4 text-white" />
+                </div>
+                <span className="font-semibold text-white text-lg">AI Receptionist</span>
               </div>
-              <span className="font-semibold text-white text-lg">AI Receptionist</span>
+              <span className="text-xs text-purple-300/70 ml-10">Voice & Chat Assistant</span>
             </div>
           </div>
         </div>
