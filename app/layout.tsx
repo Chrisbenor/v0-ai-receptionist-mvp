@@ -1,16 +1,16 @@
 import type React from "react"
 import type { Metadata } from "next"
-import { Inter, Noto_Sans, Roboto_Mono } from "next/font/google"
+import { Inter, Rubik, Roboto_Mono } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import "./globals.css"
 
-const inter = Inter({
+const rubik = Rubik({
   subsets: ["latin"],
   variable: "--font-heading",
   display: "swap",
 })
 
-const notoSans = Noto_Sans({
+const inter = Inter({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
   variable: "--font-sans",
@@ -53,7 +53,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${notoSans.variable} ${inter.variable} ${robotoMono.variable} font-sans antialiased`}>
+      <body className={`${inter.variable} ${rubik.variable} ${robotoMono.variable} font-sans antialiased`}>
         {children}
         <Analytics />
       </body>

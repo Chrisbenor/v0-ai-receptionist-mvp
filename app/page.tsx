@@ -372,9 +372,8 @@ export default function Home() {
                 </h1>
 
                 <p className="text-xl md:text-2xl text-white/70 leading-relaxed max-w-xl">
-                  Your AI receptionist answers questions, books appointments, and{" "}
-                  <span className="text-purple-400 font-semibold border-b-2 border-purple-400/50">works 24/7</span> —{" "}
-                  <span className="text-pink-400 font-semibold border-b-2 border-pink-400/50">even after hours</span>.
+                  Your AI receptionist answers questions, books appointments, and captures leads 24/7 — even when your
+                  team is offline.
                 </p>
 
                 <div className="space-y-4">
@@ -504,10 +503,10 @@ export default function Home() {
           <div className="container mx-auto px-4">
             <div className="max-w-3xl mx-auto text-center mb-20">
               <h2 className="text-5xl md:text-6xl font-bold mb-6 text-white font-heading">
-                Everything your business
+                Everything Your Business Needs
                 <br />
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-purple-400">
-                  needs to stay responsive
+                  from an AI Receptionist
                 </span>
               </h2>
               <p className="text-xl text-white/60 leading-relaxed">
@@ -557,7 +556,7 @@ export default function Home() {
                 </div>
                 <h3 className="font-bold mb-4 text-2xl text-white font-heading">Book Appointments</h3>
                 <p className="text-base text-white/60 leading-relaxed mb-4">
-                  Schedule meetings in seconds. Automatic calendar sync and confirmations.
+                  Book meetings in seconds, synced with your calendar and notifications.
                 </p>
                 <p className="text-sm text-purple-400 font-mono">Avg. 15s to book</p>
               </div>
@@ -591,6 +590,9 @@ export default function Home() {
         <section className="py-28 md:py-36 bg-[#0a0a1a]">
           <div className="container mx-auto px-4">
             <div className="max-w-5xl mx-auto">
+              <p className="text-center text-purple-400 text-sm uppercase tracking-wider mb-4 font-mono">
+                Your AI-Powered Digital Front Desk
+              </p>
               <h2 className="text-5xl md:text-6xl font-bold text-center mb-6 text-white font-heading">
                 Your digital
                 <br />
@@ -599,11 +601,8 @@ export default function Home() {
                 </span>
               </h2>
               <p className="text-center text-white/60 mb-20 max-w-3xl mx-auto leading-relaxed text-xl">
-                Aigencee's <span className="text-purple-400 font-semibold">AI receptionist</span> handles everything —{" "}
-                <span className="underline decoration-pink-400/50 underline-offset-4">answer questions</span>,{" "}
-                <span className="underline decoration-purple-400/50 underline-offset-4">schedule appointments</span>,
-                and <span className="underline decoration-blue-400/50 underline-offset-4">route complex requests</span>{" "}
-                to your team.
+                Aigencee's AI receptionist helps your business answer common questions, schedule appointments, and route
+                complex requests to your team when needed.
               </p>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -653,6 +652,9 @@ export default function Home() {
 
           <div className="container mx-auto px-4 relative z-10">
             <div className="max-w-6xl mx-auto">
+              <p className="text-center text-pink-400 text-sm uppercase tracking-wider mb-4 font-mono">
+                AI Receptionist, Real-World Use Cases
+              </p>
               <h2 className="text-5xl md:text-6xl font-bold text-center mb-6 text-white font-heading">
                 See it in
                 <br />
@@ -661,10 +663,11 @@ export default function Home() {
                 </span>
               </h2>
               <p className="text-center text-white/60 mb-16 text-xl">
-                Watch how the AI receptionist handles real customer interactions
+                Watch how our AI receptionist answers questions, books appointments, and routes requests across
+                different industries.
               </p>
 
-              <div className="flex justify-center gap-3 mb-12 flex-wrap">
+              <div className="flex justify-center gap-3 mb-12 flex-wrap overflow-x-auto">
                 {[
                   { id: "home-services", label: "Home Services", icon: "🔧" },
                   { id: "pro-services", label: "Pro Services", icon: "💼" },
@@ -726,13 +729,12 @@ export default function Home() {
         <section id="industries" className="py-28 md:py-36 bg-[#0a0a1a]">
           <div className="container mx-auto px-4">
             <div className="max-w-5xl mx-auto">
+              <p className="text-center text-purple-400 text-sm uppercase tracking-wider mb-4 font-mono">
+                Industries That Use Our AI Receptionist
+              </p>
               <h2 className="text-5xl md:text-6xl font-bold text-center mb-6 text-white font-heading">
                 Industries We Serve
               </h2>
-              <p className="text-center text-white/60 mb-20 max-w-3xl mx-auto leading-relaxed text-xl">
-                Whether you're a local plumber, a busy clinic, or a thriving restaurant,{" "}
-                <span className="text-purple-400 font-semibold">Aigencee</span> is built to scale with you.
-              </p>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="bg-gradient-to-br from-pink-500/10 to-transparent p-8 rounded-3xl border border-pink-500/20 hover:border-pink-500/50 transition-all group">
@@ -743,7 +745,8 @@ export default function Home() {
                   </div>
                   <h3 className="font-bold text-white mb-3 text-xl font-heading">Home Services</h3>
                   <p className="text-white/60 leading-relaxed">
-                    Manage appointment booking, service requests, and customer inquiries seamlessly.
+                    Manage appointment booking, service requests, and customer inquiries — without missing calls or
+                    leads.
                   </p>
                 </div>
 
@@ -848,7 +851,7 @@ export default function Home() {
                       clipRule="evenodd"
                     />
                   </svg>
-                  Setup in 2 minutes
+                  Set up in 2 minutes
                 </div>
                 <div className="flex items-center gap-2 text-white/60">
                   <svg className="h-5 w-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
