@@ -89,6 +89,7 @@ export function stopListening(): void {
 
 export function speak(text: string, onEnd?: () => void): void {
   if (!synthesis) {
+    if (onEnd) onEnd()
     return
   }
 
@@ -120,14 +121,15 @@ export function speak(text: string, onEnd?: () => void): void {
     }
   }
 
-  if (onEnd) {
-    utterance.onend = onEnd
+  utterance.onend = () => {
+    if (onEnd) onEnd()
   }
 
   utterance.onerror = (event) => {
     if (event.error !== "interrupted" && event.error !== "canceled") {
       console.error("[v0] Speech synthesis error:", event.error)
     }
+    if (onEnd) onEnd()
   }
 
   synthesis.speak(utterance)

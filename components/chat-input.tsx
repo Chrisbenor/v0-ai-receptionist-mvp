@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState, useEffect, type FormEvent } from "react"
+import { useState, useEffect, useRef, type FormEvent } from "react"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Send, Mic, MicOff } from "lucide-react"
@@ -11,12 +11,15 @@ interface ChatInputProps {
   onSend: (message: string) => void
   disabled?: boolean
   voiceMode?: boolean
+  isSpeaking?: boolean
 }
 
-export function ChatInput({ onSend, disabled, voiceMode = false }: ChatInputProps) {
+export function ChatInput({ onSend, disabled, voiceMode = false, isSpeaking = false }: ChatInputProps) {
   const [input, setInput] = useState("")
   const [isListening, setIsListening] = useState(false)
   const [voiceSupported, setVoiceSupported] = useState(false)
+  const voiceModeActive = useRef(false)
+  const recognitionActive = useRef(false)
 
   useEffect(() => {
     initVoice()
@@ -28,12 +31,6 @@ export function ChatInput({ onSend, disabled, voiceMode = false }: ChatInputProp
     if (input.trim() && !disabled) {
       onSend(input.trim())
       setInput("")
-
-      if (voiceMode && !isListening) {
-        setTimeout(() => {
-          handleVoiceStart()
-        }, 500)
-      }
     }
   }
 
@@ -45,36 +42,32 @@ export function ChatInput({ onSend, disabled, voiceMode = false }: ChatInputProp
   }
 
   const handleVoiceStart = () => {
+    if (recognitionActive.current || isSpeaking || !voiceModeActive.current) {
+      return
+    }
+
+    recognitionActive.current = true
+
     startListening({
       onResult: (transcript) => {
         setInput(transcript)
         setIsListening(false)
-        // Auto-send the transcribed message
-        setTimeout(() => {
-          onSend(transcript)
-          setInput("")
-          if (voiceMode) {
-            setTimeout(() => {
-              handleVoiceStart()
-            }, 500)
-          }
-        }, 100)
+        recognitionActive.current = false
+
+        if (transcript.trim()) {
+          setTimeout(() => {
+            onSend(transcript.trim())
+            setInput("")
+          }, 100)
+        }
       },
       onError: (error) => {
         setIsListening(false)
-        if (voiceMode && error !== "not-allowed") {
-          setTimeout(() => {
-            handleVoiceStart()
-          }, 1000)
-        }
+        recognitionActive.current = false
       },
       onEnd: () => {
         setIsListening(false)
-        if (voiceMode) {
-          setTimeout(() => {
-            handleVoiceStart()
-          }, 500)
-        }
+        recognitionActive.current = false
       },
     })
     setIsListening(true)
@@ -84,19 +77,47 @@ export function ChatInput({ onSend, disabled, voiceMode = false }: ChatInputProp
     if (isListening) {
       stopListening()
       setIsListening(false)
+      recognitionActive.current = false
     } else {
       handleVoiceStart()
     }
   }
 
   useEffect(() => {
-    if (voiceMode && !isListening && !disabled) {
-      handleVoiceStart()
-    } else if (!voiceMode && isListening) {
+    voiceModeActive.current = voiceMode
+
+    if (voiceMode) {
+      if (!isListening && !disabled && !isSpeaking) {
+        setTimeout(() => {
+          handleVoiceStart()
+        }, 500)
+      }
+    } else {
       stopListening()
       setIsListening(false)
+      recognitionActive.current = false
+    }
+
+    return () => {
+      if (!voiceMode) {
+        stopListening()
+        setIsListening(false)
+        recognitionActive.current = false
+      }
     }
   }, [voiceMode])
+
+  useEffect(() => {
+    if (voiceModeActive.current && !isSpeaking && !isListening && !disabled) {
+      const timer = setTimeout(() => {
+        if (voiceModeActive.current && !recognitionActive.current) {
+          handleVoiceStart()
+        }
+      }, 1000)
+
+      return () => clearTimeout(timer)
+    }
+  }, [isSpeaking, isListening, disabled])
 
   return (
     <form onSubmit={handleSubmit} className="max-w-4xl mx-auto">

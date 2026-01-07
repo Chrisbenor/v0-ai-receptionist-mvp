@@ -58,6 +58,7 @@ export default function ChatPage() {
   const [showContactForm, setShowContactForm] = useState(false)
   const [voiceEnabled, setVoiceEnabled] = useState(true)
   const [voiceMode, setVoiceMode] = useState(false)
+  const isSpeaking = useRef(false)
   const [userInfo, setUserInfo] = useState({
     name: firstName && lastName ? `${firstName} ${lastName}` : "",
     email: email || "",
@@ -85,6 +86,7 @@ export default function ChatPage() {
 
   const sendMessage = async (content: string, additionalInfo?: { name?: string; email?: string }) => {
     stopSpeaking()
+    isSpeaking.current = false
 
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -128,9 +130,12 @@ export default function ChatPage() {
         setMessages((prev) => [...prev, assistantMessage])
 
         if (voiceEnabled) {
+          isSpeaking.current = true
           setTimeout(() => {
-            speak(data.message)
-          }, 100)
+            speak(data.message, () => {
+              isSpeaking.current = false
+            })
+          }, 300)
         }
 
         if (data.type === "escalate" && !userInfo.name && !additionalInfo?.name) {
@@ -138,7 +143,7 @@ export default function ChatPage() {
         }
       }
     } catch (error) {
-      console.error("[v0] Error sending message:", error)
+      console.error("Error sending message:", error)
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: "assistant",
@@ -171,7 +176,13 @@ export default function ChatPage() {
   }
 
   const toggleVoiceMode = () => {
-    setVoiceMode(!voiceMode)
+    const newVoiceMode = !voiceMode
+    setVoiceMode(newVoiceMode)
+
+    if (!newVoiceMode) {
+      stopSpeaking()
+      isSpeaking.current = false
+    }
   }
 
   const lastMessage = messages[messages.length - 1]
@@ -243,7 +254,7 @@ export default function ChatPage() {
         {showQuickReplies && <QuickReplies actions={lastMessage.suggestedActions!} onSelect={handleQuickReply} />}
 
         <div className="px-4 py-3 pb-[calc(env(safe-area-inset-bottom)+12px)]">
-          <ChatInput onSend={sendMessage} disabled={isLoading} voiceMode={voiceMode} />
+          <ChatInput onSend={sendMessage} disabled={isLoading} voiceMode={voiceMode} isSpeaking={isSpeaking.current} />
         </div>
       </div>
     </div>
