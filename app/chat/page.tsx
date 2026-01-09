@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react"
 import { useSearchParams } from "next/navigation"
-import { Volume2, VolumeX, Mic, MicOff } from "lucide-react"
+import { Volume2, VolumeX, Mic, MicOff, ExternalLink } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ChatHeader } from "@/components/chat-header"
 import { ChatMessage } from "@/components/chat-message"
@@ -34,6 +34,7 @@ export interface Message {
   event?: BookingEvent
   suggestedActions?: SuggestedAction[]
   timestamp: Date
+  calendlyUrl?: string
 }
 
 export default function ChatPage() {
@@ -43,6 +44,8 @@ export default function ChatPage() {
   const email = searchParams.get("email")
   const companyName = searchParams.get("companyName")
   const industry = searchParams.get("industry")
+
+  const sessionId = useRef(crypto.randomUUID())
 
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -58,6 +61,7 @@ export default function ChatPage() {
   const [showContactForm, setShowContactForm] = useState(false)
   const [voiceEnabled, setVoiceEnabled] = useState(true)
   const [voiceMode, setVoiceMode] = useState(false)
+  const [isHandoff, setIsHandoff] = useState(false)
   const isSpeaking = useRef(false)
   const [userInfo, setUserInfo] = useState({
     name: firstName && lastName ? `${firstName} ${lastName}` : "",
@@ -99,51 +103,64 @@ export default function ChatPage() {
     setIsLoading(true)
 
     try {
-      const response = await fetch("/api/receptionist", {
+      const response = await fetch("/api/chat", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          source: "web",
           message: content,
-          name: additionalInfo?.name || userInfo.name || undefined,
-          email: additionalInfo?.email || userInfo.email || undefined,
-          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-          industry: industry || undefined,
+          sessionId: sessionId.current,
+          industry: industry || "Clinics",
+          user: {
+            name: additionalInfo?.name || userInfo.name || undefined,
+            email: additionalInfo?.email || userInfo.email || undefined,
+          },
         }),
       })
 
+      if (!response.ok) {
+        console.error("[v0] API error:", response.status, response.statusText)
+        throw new Error(`API returned ${response.status}`)
+      }
+
+      const contentType = response.headers.get("content-type")
+      if (!contentType || !contentType.includes("application/json")) {
+        const text = await response.text()
+        console.error("[v0] Non-JSON response:", text)
+        throw new Error("Server returned non-JSON response")
+      }
+
       const data = await response.json()
 
-      if (data.ok) {
-        const assistantMessage: Message = {
-          id: (Date.now() + 1).toString(),
-          role: "assistant",
-          content: data.message,
-          type: data.type,
-          event: data.event,
-          suggestedActions: data.suggestedActions,
-          timestamp: new Date(),
-        }
+      const assistantMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        role: "assistant",
+        content: data.replyText,
+        timestamp: new Date(),
+      }
 
-        setMessages((prev) => [...prev, assistantMessage])
+      if (data.action === "booking" && data.metadata?.calendlyUrl) {
+        assistantMessage.calendlyUrl = data.metadata.calendlyUrl
+      }
 
-        if (voiceEnabled) {
-          isSpeaking.current = true
-          setTimeout(() => {
-            speak(data.message, () => {
-              isSpeaking.current = false
-            })
-          }, 300)
-        }
+      if (data.action === "handoff") {
+        setIsHandoff(true)
+        assistantMessage.type = "escalate"
+      }
 
-        if (data.type === "escalate" && !userInfo.name && !additionalInfo?.name) {
-          setShowContactForm(true)
-        }
+      setMessages((prev) => [...prev, assistantMessage])
+
+      if (voiceEnabled) {
+        isSpeaking.current = true
+        setTimeout(() => {
+          speak(data.replyText, () => {
+            isSpeaking.current = false
+          })
+        }, 300)
       }
     } catch (error) {
-      console.error("Error sending message:", error)
+      console.error("[v0] Error sending message:", error)
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: "assistant",
@@ -197,6 +214,17 @@ export default function ChatPage() {
           <div key={message.id}>
             <ChatMessage message={message} />
             {message.type === "book_confirmed" && message.event && <BookingConfirmation event={message.event} />}
+            {message.role === "assistant" && message.calendlyUrl && (
+              <div className="ml-12 mt-3">
+                <Button
+                  onClick={() => window.open(message.calendlyUrl, "_blank")}
+                  className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-medium rounded-full px-6 py-2 shadow-lg shadow-purple-500/30 transition-all hover:scale-105"
+                >
+                  <ExternalLink className="w-4 h-4 mr-2" />
+                  Book appointment
+                </Button>
+              </div>
+            )}
           </div>
         ))}
 
@@ -208,6 +236,15 @@ export default function ChatPage() {
       </div>
 
       <div className="sticky bottom-0 z-20 w-full border-t border-purple-500/20 bg-gradient-to-r from-[#1a0b2e] via-[#2d1b4e] to-[#1a0b2e] backdrop-blur-xl shadow-2xl shadow-purple-900/30">
+        {isHandoff && (
+          <div className="px-4 pt-2 pb-1 flex justify-center">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/20 border border-purple-500/30 text-purple-200 text-sm">
+              <div className="w-2 h-2 rounded-full bg-purple-400 animate-pulse" />
+              Connecting you to a human...
+            </div>
+          </div>
+        )}
+
         <div className="px-4 pt-2 pb-1 flex justify-center gap-3 border-b border-purple-500/10">
           <Button
             variant="ghost"
@@ -251,10 +288,17 @@ export default function ChatPage() {
           </Button>
         </div>
 
-        {showQuickReplies && <QuickReplies actions={lastMessage.suggestedActions!} onSelect={handleQuickReply} />}
+        {showQuickReplies && !isHandoff && (
+          <QuickReplies actions={lastMessage.suggestedActions!} onSelect={handleQuickReply} />
+        )}
 
         <div className="px-4 py-3 pb-[calc(env(safe-area-inset-bottom)+12px)]">
-          <ChatInput onSend={sendMessage} disabled={isLoading} voiceMode={voiceMode} isSpeaking={isSpeaking.current} />
+          <ChatInput
+            onSend={sendMessage}
+            disabled={isLoading || isHandoff}
+            voiceMode={voiceMode}
+            isSpeaking={isSpeaking.current}
+          />
         </div>
       </div>
     </div>
