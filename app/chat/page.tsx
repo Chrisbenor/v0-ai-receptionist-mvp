@@ -63,11 +63,13 @@ export default function ChatPage() {
   const [voiceMode, setVoiceMode] = useState(false)
   const [isHandoff, setIsHandoff] = useState(false)
   const isSpeaking = useRef(false)
+  const shouldRestartVoice = useRef(false)
   const [userInfo, setUserInfo] = useState({
     name: firstName && lastName ? `${firstName} ${lastName}` : "",
     email: email || "",
   })
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const chatInputRef = useRef<{ startVoiceCapture: () => void } | null>(null)
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
@@ -87,6 +89,25 @@ export default function ChatPage() {
       document.body.classList.remove("overflow-hidden")
     }
   }, [])
+
+  useEffect(() => {
+    if (!voiceMode || isLoading || isHandoff || isSpeaking.current) {
+      return
+    }
+
+    if (shouldRestartVoice.current) {
+      const timer = setTimeout(() => {
+        if (voiceMode && !isSpeaking.current && !isLoading && !isHandoff) {
+          shouldRestartVoice.current = false
+          if (chatInputRef.current?.startVoiceCapture) {
+            chatInputRef.current.startVoiceCapture()
+          }
+        }
+      }, 1500)
+
+      return () => clearTimeout(timer)
+    }
+  }, [voiceMode, isLoading, isHandoff, isSpeaking.current, messages.length])
 
   const sendMessage = async (content: string, additionalInfo?: { name?: string; email?: string }) => {
     stopSpeaking()
@@ -155,10 +176,16 @@ export default function ChatPage() {
         setTimeout(() => {
           speak(data.replyText, () => {
             isSpeaking.current = false
+            if (voiceMode && !isHandoff) {
+              shouldRestartVoice.current = true
+            }
           })
         }, 300)
       } else {
         isSpeaking.current = false
+        if (voiceMode && !isHandoff) {
+          shouldRestartVoice.current = true
+        }
       }
     } catch (error) {
       console.error("[v0] Error sending message:", error)
@@ -196,6 +223,7 @@ export default function ChatPage() {
   const toggleVoiceMode = () => {
     const newVoiceMode = !voiceMode
     setVoiceMode(newVoiceMode)
+    shouldRestartVoice.current = false
 
     if (!newVoiceMode) {
       stopSpeaking()
@@ -295,6 +323,7 @@ export default function ChatPage() {
 
         <div className="px-4 py-3 pb-[calc(env(safe-area-inset-bottom)+12px)]">
           <ChatInput
+            ref={chatInputRef}
             onSend={sendMessage}
             disabled={isLoading || isHandoff}
             voiceMode={voiceMode}
