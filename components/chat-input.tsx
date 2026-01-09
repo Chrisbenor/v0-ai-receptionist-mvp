@@ -42,19 +42,30 @@ export const ChatInput = forwardRef<{ startVoiceCapture: () => void }, ChatInput
     }
 
     const startVoiceCapture = () => {
+      console.log(
+        "[v0] startVoiceCapture called - isListeningRef:",
+        isListeningRef.current,
+        "isSpeaking:",
+        isSpeaking,
+        "disabled:",
+        disabled,
+      )
+
       if (isListeningRef.current || isSpeaking || disabled) {
+        console.log("[v0] Voice capture blocked")
         return
       }
 
+      console.log("[v0] Starting voice capture")
       isListeningRef.current = true
       setIsListening(true)
 
       startListening({
         onResult: (transcript) => {
+          console.log("[v0] Voice onResult:", transcript)
           setInput(transcript)
-          setIsListening(false)
-          isListeningRef.current = false
 
+          // Don't reset here - let onEnd handle cleanup
           if (transcript.trim()) {
             setTimeout(() => {
               onSend(transcript.trim())
@@ -63,11 +74,12 @@ export const ChatInput = forwardRef<{ startVoiceCapture: () => void }, ChatInput
           }
         },
         onError: (error) => {
-          console.error("[v0] Voice error:", error)
+          console.log("[v0] Voice onError:", error)
           setIsListening(false)
           isListeningRef.current = false
         },
         onEnd: () => {
+          console.log("[v0] Voice onEnd - cleaning up")
           setIsListening(false)
           isListeningRef.current = false
         },
@@ -79,7 +91,10 @@ export const ChatInput = forwardRef<{ startVoiceCapture: () => void }, ChatInput
     }))
 
     const handleVoiceToggle = () => {
+      console.log("[v0] handleVoiceToggle - isListening:", isListening, "isListeningRef:", isListeningRef.current)
+
       if (isListening || isListeningRef.current) {
+        console.log("[v0] Stopping listening")
         stopListening()
         setIsListening(false)
         isListeningRef.current = false
@@ -90,11 +105,16 @@ export const ChatInput = forwardRef<{ startVoiceCapture: () => void }, ChatInput
 
     useEffect(() => {
       if (!voiceMode && (isListening || isListeningRef.current)) {
+        console.log("[v0] VoiceMode OFF - cleaning up")
         stopListening()
         setIsListening(false)
         isListeningRef.current = false
       }
     }, [voiceMode])
+
+    useEffect(() => {
+      console.log("[v0] State changed - isListening:", isListening, "disabled:", disabled, "isSpeaking:", isSpeaking)
+    }, [isListening, disabled, isSpeaking])
 
     return (
       <form onSubmit={handleSubmit} className="max-w-4xl mx-auto">
