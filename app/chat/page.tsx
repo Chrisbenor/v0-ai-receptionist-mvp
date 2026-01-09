@@ -175,6 +175,7 @@ export default function ChatPage() {
         isSpeaking.current = true
         setTimeout(() => {
           speak(data.replyText, () => {
+            console.log("[v0] Speech completed, resetting isSpeaking")
             isSpeaking.current = false
             if (voiceMode && !isHandoff) {
               shouldRestartVoice.current = true
@@ -189,6 +190,7 @@ export default function ChatPage() {
       }
     } catch (error) {
       console.error("[v0] Error sending message:", error)
+      isSpeaking.current = false
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: "assistant",
@@ -199,6 +201,11 @@ export default function ChatPage() {
       setMessages((prev) => [...prev, errorMessage])
     } finally {
       setIsLoading(false)
+      setTimeout(() => {
+        if (!voiceEnabled) {
+          isSpeaking.current = false
+        }
+      }, 500)
     }
   }
 
