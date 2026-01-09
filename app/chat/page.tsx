@@ -62,14 +62,13 @@ export default function ChatPage() {
   const [voiceEnabled, setVoiceEnabled] = useState(true)
   const [voiceMode, setVoiceMode] = useState(false)
   const [isHandoff, setIsHandoff] = useState(false)
-  const isSpeaking = useRef(false)
-  const shouldRestartVoice = useRef(false)
   const [userInfo, setUserInfo] = useState({
     name: firstName && lastName ? `${firstName} ${lastName}` : "",
     email: email || "",
   })
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const chatInputRef = useRef<{ startVoiceCapture: () => void } | null>(null)
+  const isAISpeaking = useRef(false)
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
@@ -91,27 +90,36 @@ export default function ChatPage() {
   }, [])
 
   useEffect(() => {
-    if (!voiceMode || isLoading || isHandoff || isSpeaking.current) {
+    // Only auto-restart if voice mode is ON
+    if (!voiceMode || isLoading || isHandoff) {
       return
     }
 
-    if (shouldRestartVoice.current) {
-      const timer = setTimeout(() => {
-        if (voiceMode && !isSpeaking.current && !isLoading && !isHandoff) {
-          shouldRestartVoice.current = false
-          if (chatInputRef.current?.startVoiceCapture) {
-            chatInputRef.current.startVoiceCapture()
-          }
-        }
-      }, 1500)
-
-      return () => clearTimeout(timer)
+    // Check if the last message is from assistant (AI just responded)
+    const lastMessage = messages[messages.length - 1]
+    if (lastMessage?.role !== "assistant") {
+      return
     }
-  }, [voiceMode, isLoading, isHandoff, isSpeaking.current, messages.length])
+
+    // Wait for AI to finish speaking, then restart voice capture
+    const checkAndRestart = () => {
+      if (voiceMode && !isLoading && !isHandoff && !isAISpeaking.current) {
+        chatInputRef.current?.startVoiceCapture()
+      } else if (isAISpeaking.current) {
+        // If still speaking, check again in 500ms
+        setTimeout(checkAndRestart, 500)
+      }
+    }
+
+    // Give a moment for speech to start, then begin checking
+    const timer = setTimeout(checkAndRestart, 1000)
+
+    return () => clearTimeout(timer)
+  }, [voiceMode, isLoading, isHandoff, messages])
 
   const sendMessage = async (content: string, additionalInfo?: { name?: string; email?: string }) => {
     stopSpeaking()
-    isSpeaking.current = false
+    isAISpeaking.current = false
 
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -171,26 +179,15 @@ export default function ChatPage() {
 
       setMessages((prev) => [...prev, assistantMessage])
 
-      if (voiceEnabled) {
-        isSpeaking.current = true
-        setTimeout(() => {
-          speak(data.replyText, () => {
-            console.log("[v0] Speech completed, resetting isSpeaking")
-            isSpeaking.current = false
-            if (voiceMode && !isHandoff) {
-              shouldRestartVoice.current = true
-            }
-          })
-        }, 300)
-      } else {
-        isSpeaking.current = false
-        if (voiceMode && !isHandoff) {
-          shouldRestartVoice.current = true
-        }
+      if (voiceEnabled && !isHandoff) {
+        isAISpeaking.current = true
+        speak(data.replyText, () => {
+          // Callback when speech completes
+          isAISpeaking.current = false
+        })
       }
     } catch (error) {
       console.error("[v0] Error sending message:", error)
-      isSpeaking.current = false
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: "assistant",
@@ -199,13 +196,9 @@ export default function ChatPage() {
         timestamp: new Date(),
       }
       setMessages((prev) => [...prev, errorMessage])
+      isAISpeaking.current = false
     } finally {
       setIsLoading(false)
-      setTimeout(() => {
-        if (!voiceEnabled) {
-          isSpeaking.current = false
-        }
-      }, 500)
     }
   }
 
@@ -230,11 +223,16 @@ export default function ChatPage() {
   const toggleVoiceMode = () => {
     const newVoiceMode = !voiceMode
     setVoiceMode(newVoiceMode)
-    shouldRestartVoice.current = false
+    isAISpeaking.current = false
 
     if (!newVoiceMode) {
       stopSpeaking()
-      isSpeaking.current = false
+    } else {
+      setTimeout(() => {
+        if (chatInputRef.current?.startVoiceCapture) {
+          chatInputRef.current.startVoiceCapture()
+        }
+      }, 300)
     }
   }
 
@@ -329,13 +327,7 @@ export default function ChatPage() {
         )}
 
         <div className="px-4 py-3 pb-[calc(env(safe-area-inset-bottom)+12px)]">
-          <ChatInput
-            ref={chatInputRef}
-            onSend={sendMessage}
-            disabled={isLoading || isHandoff}
-            voiceMode={voiceMode}
-            isSpeaking={isSpeaking.current}
-          />
+          <ChatInput ref={chatInputRef} onSend={sendMessage} disabled={isLoading || isHandoff} voiceMode={voiceMode} />
         </div>
       </div>
     </div>

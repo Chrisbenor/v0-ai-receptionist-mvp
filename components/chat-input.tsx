@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState, useEffect, useRef, useImperativeHandle, forwardRef, type FormEvent } from "react"
+import { useState, useEffect, useImperativeHandle, forwardRef, type FormEvent } from "react"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Send, Mic, MicOff } from "lucide-react"
@@ -11,15 +11,13 @@ interface ChatInputProps {
   onSend: (message: string) => void
   disabled?: boolean
   voiceMode?: boolean
-  isSpeaking?: boolean
 }
 
 export const ChatInput = forwardRef<{ startVoiceCapture: () => void }, ChatInputProps>(
-  ({ onSend, disabled, voiceMode = false, isSpeaking = false }, ref) => {
+  ({ onSend, disabled, voiceMode = false }, ref) => {
     const [input, setInput] = useState("")
     const [isListening, setIsListening] = useState(false)
     const [voiceSupported, setVoiceSupported] = useState(false)
-    const isListeningRef = useRef(false)
 
     useEffect(() => {
       initVoice()
@@ -42,16 +40,16 @@ export const ChatInput = forwardRef<{ startVoiceCapture: () => void }, ChatInput
     }
 
     const startVoiceCapture = () => {
-      if (isListeningRef.current || isSpeaking || disabled) {
+      if (isListening || disabled) {
         return
       }
 
-      isListeningRef.current = true
       setIsListening(true)
 
       startListening({
         onResult: (transcript) => {
           setInput(transcript)
+          setIsListening(false)
 
           if (transcript.trim()) {
             setTimeout(() => {
@@ -62,11 +60,9 @@ export const ChatInput = forwardRef<{ startVoiceCapture: () => void }, ChatInput
         },
         onError: (error) => {
           setIsListening(false)
-          isListeningRef.current = false
         },
         onEnd: () => {
           setIsListening(false)
-          isListeningRef.current = false
         },
       })
     }
@@ -76,22 +72,20 @@ export const ChatInput = forwardRef<{ startVoiceCapture: () => void }, ChatInput
     }))
 
     const handleVoiceToggle = () => {
-      if (isListening || isListeningRef.current) {
+      if (isListening) {
         stopListening()
         setIsListening(false)
-        isListeningRef.current = false
       } else {
         startVoiceCapture()
       }
     }
 
     useEffect(() => {
-      if (!voiceMode && (isListening || isListeningRef.current)) {
+      if (!voiceMode && isListening) {
         stopListening()
         setIsListening(false)
-        isListeningRef.current = false
       }
-    }, [voiceMode])
+    }, [voiceMode, isListening])
 
     return (
       <form onSubmit={handleSubmit} className="max-w-4xl mx-auto">
@@ -123,7 +117,7 @@ export const ChatInput = forwardRef<{ startVoiceCapture: () => void }, ChatInput
                 type="button"
                 size="lg"
                 onClick={handleVoiceToggle}
-                disabled={disabled}
+                disabled={disabled || !voiceMode}
                 className={`h-12 px-4 sm:px-6 rounded-xl shadow-lg transition-all hover:scale-105 disabled:opacity-50 disabled:hover:scale-100 flex-1 sm:flex-initial ${
                   isListening
                     ? "bg-gradient-to-r from-pink-600 to-red-600 hover:from-pink-500 hover:to-red-500 animate-pulse"

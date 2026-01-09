@@ -55,6 +55,11 @@ export function startListening(options: VoiceRecognitionOptions): void {
     return
   }
 
+  recognition.continuous = false
+  recognition.interimResults = false
+  recognition.maxAlternatives = 1
+  // No direct timeout property, but recognition naturally times out after ~10-15 seconds of silence
+
   recognition.onresult = (event: any) => {
     const transcript = event.results[0][0].transcript
     options.onResult(transcript)

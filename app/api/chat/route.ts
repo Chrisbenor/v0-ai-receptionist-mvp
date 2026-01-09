@@ -112,9 +112,12 @@ export async function POST(request: NextRequest) {
 
     const data: N8NResponse = await response.json()
 
+    const rawText =
+      data.replyText || data.response || data.reply || data.message || "I'm here to help. How can I assist you?"
+    const cleanedText = rawText.startsWith("=") ? rawText.substring(1).trim() : rawText
+
     const normalized: NormalizedResponse = {
-      replyText:
-        data.replyText || data.response || data.reply || data.message || "I'm here to help. How can I assist you?",
+      replyText: cleanedText,
       action: data.action || "info",
       metadata: data.metadata || {},
     }
