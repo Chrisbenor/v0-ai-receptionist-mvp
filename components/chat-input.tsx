@@ -18,8 +18,7 @@ export function ChatInput({ onSend, disabled, voiceMode = false, isSpeaking = fa
   const [input, setInput] = useState("")
   const [isListening, setIsListening] = useState(false)
   const [voiceSupported, setVoiceSupported] = useState(false)
-  const voiceModeActive = useRef(false)
-  const recognitionActive = useRef(false)
+  const isListeningRef = useRef(false)
 
   useEffect(() => {
     initVoice()
@@ -41,18 +40,19 @@ export function ChatInput({ onSend, disabled, voiceMode = false, isSpeaking = fa
     }
   }
 
-  const handleVoiceStart = () => {
-    if (recognitionActive.current || isSpeaking || !voiceModeActive.current) {
+  const startVoiceCapture = () => {
+    if (isListeningRef.current || isSpeaking || disabled) {
       return
     }
 
-    recognitionActive.current = true
+    isListeningRef.current = true
+    setIsListening(true)
 
     startListening({
       onResult: (transcript) => {
         setInput(transcript)
         setIsListening(false)
-        recognitionActive.current = false
+        isListeningRef.current = false
 
         if (transcript.trim()) {
           setTimeout(() => {
@@ -62,62 +62,46 @@ export function ChatInput({ onSend, disabled, voiceMode = false, isSpeaking = fa
         }
       },
       onError: (error) => {
+        console.error("[v0] Voice error:", error)
         setIsListening(false)
-        recognitionActive.current = false
+        isListeningRef.current = false
       },
       onEnd: () => {
         setIsListening(false)
-        recognitionActive.current = false
+        isListeningRef.current = false
       },
     })
-    setIsListening(true)
   }
 
   const handleVoiceToggle = () => {
     if (isListening) {
       stopListening()
       setIsListening(false)
-      recognitionActive.current = false
+      isListeningRef.current = false
     } else {
-      handleVoiceStart()
+      startVoiceCapture()
     }
   }
 
   useEffect(() => {
-    voiceModeActive.current = voiceMode
-
-    if (voiceMode) {
-      if (!isListening && !disabled && !isSpeaking) {
-        setTimeout(() => {
-          handleVoiceStart()
-        }, 500)
-      }
-    } else {
-      stopListening()
-      setIsListening(false)
-      recognitionActive.current = false
-    }
-
-    return () => {
-      if (!voiceMode) {
-        stopListening()
-        setIsListening(false)
-        recognitionActive.current = false
-      }
-    }
-  }, [voiceMode])
-
-  useEffect(() => {
-    if (voiceModeActive.current && !isSpeaking && !isListening && !disabled) {
+    if (voiceMode && !isSpeaking && !isListening && !disabled && !isListeningRef.current) {
       const timer = setTimeout(() => {
-        if (voiceModeActive.current && !recognitionActive.current) {
-          handleVoiceStart()
+        if (voiceMode && !isListeningRef.current) {
+          startVoiceCapture()
         }
-      }, 1000)
+      }, 1500)
 
       return () => clearTimeout(timer)
     }
-  }, [isSpeaking, isListening, disabled])
+  }, [voiceMode, isSpeaking, isListening, disabled])
+
+  useEffect(() => {
+    if (!voiceMode && isListening) {
+      stopListening()
+      setIsListening(false)
+      isListeningRef.current = false
+    }
+  }, [voiceMode])
 
   return (
     <form onSubmit={handleSubmit} className="max-w-4xl mx-auto">

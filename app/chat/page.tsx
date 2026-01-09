@@ -120,7 +120,6 @@ export default function ChatPage() {
       })
 
       if (!response.ok) {
-        console.error("[v0] API error:", response.status, response.statusText)
         throw new Error(`API returned ${response.status}`)
       }
 
