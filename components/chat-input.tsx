@@ -84,9 +84,13 @@ export function ChatInput({ onSend, disabled, voiceMode = false, isSpeaking = fa
   }
 
   useEffect(() => {
-    if (voiceMode && !isSpeaking && !isListening && !disabled && !isListeningRef.current) {
+    if (!voiceMode) {
+      return
+    }
+
+    if (!isSpeaking && !isListening && !disabled && !isListeningRef.current) {
       const timer = setTimeout(() => {
-        if (voiceMode && !isListeningRef.current) {
+        if (voiceMode && !isListeningRef.current && !isSpeaking) {
           startVoiceCapture()
         }
       }, 1500)
@@ -101,7 +105,7 @@ export function ChatInput({ onSend, disabled, voiceMode = false, isSpeaking = fa
       setIsListening(false)
       isListeningRef.current = false
     }
-  }, [voiceMode])
+  }, [voiceMode, isListening])
 
   return (
     <form onSubmit={handleSubmit} className="max-w-4xl mx-auto">

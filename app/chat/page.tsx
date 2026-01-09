@@ -157,6 +157,8 @@ export default function ChatPage() {
             isSpeaking.current = false
           })
         }, 300)
+      } else {
+        isSpeaking.current = false
       }
     } catch (error) {
       console.error("[v0] Error sending message:", error)
