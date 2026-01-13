@@ -876,7 +876,7 @@ export default function Home() {
                             clipRule="evenodd"
                           />
                         </svg>
-                        <span>Basic intake & message capture</span>
+                        <span className="text-background">Basic intake &amp; message capture</span>
                       </li>
                       <li className="flex items-start gap-3">
                         <svg
@@ -890,7 +890,7 @@ export default function Home() {
                             clipRule="evenodd"
                           />
                         </svg>
-                        Shares caller details with your team
+                        <span className="text-background"> Shares caller details with your team </span>
                       </li>
                       <li className="flex items-start gap-3 text-white/70">
                         <svg
