@@ -814,6 +814,171 @@ export default function Home() {
           </div>
         </section>
 
+        <section id="pricing" className="py-28 md:py-36 relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-b from-[#0a0a1a] via-[#12071F] to-[#1a0a2e]" />
+          <div className="absolute inset-0">
+            <div className="absolute top-20 right-20 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-pulse" />
+            <div className="absolute bottom-20 left-20 w-96 h-96 bg-pink-500/10 rounded-full blur-3xl animate-pulse delay-1000" />
+          </div>
+
+          <div className="container mx-auto px-4 relative z-10">
+            <div className="max-w-6xl mx-auto space-y-16">
+              <div className="text-center space-y-4 max-w-3xl mx-auto">
+                <h2 className="text-5xl md:text-6xl font-bold text-white font-heading leading-tight">
+                  See If the AI Receptionist Is{" "}
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-purple-400">
+                    Right for Your Business
+                  </span>
+                </h2>
+                <p className="text-xl text-white/70 leading-relaxed">
+                  Start a real conversation with the AI receptionist and see how it works for your company.
+                </p>
+                <p className="text-lg text-white/60 mt-4">7-day free trial. No credit card required. Cancel anytime.</p>
+              </div>
+
+              <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto mt-16">
+                {/* Starter Plan */}
+                <div className="group relative bg-gradient-to-br from-white/5 to-white/[0.02] border border-purple-500/30 rounded-3xl p-10 hover:border-purple-400 transition-all hover:scale-[1.02] backdrop-blur-sm shadow-2xl">
+                  <div className="absolute inset-0 bg-gradient-to-br from-purple-600/0 to-pink-600/0 group-hover:from-purple-600/5 group-hover:to-pink-600/5 rounded-3xl transition-all" />
+                  <div className="relative space-y-6">
+                    <div>
+                      <div className="text-sm font-mono text-purple-400 mb-2 uppercase tracking-wider">Starter</div>
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-5xl font-bold text-white font-heading">$99</span>
+                        <span className="text-white/50">/ month</span>
+                      </div>
+                      <p className="text-white/60 mt-3">For small teams that want to stop missing calls.</p>
+                    </div>
+                    <ul className="space-y-4 my-8">
+                      <li className="flex items-start gap-3 text-white/80">
+                        <svg
+                          className="h-5 w-5 text-green-400 flex-shrink-0 mt-0.5"
+                          fill="currentColor"
+                          viewBox="0 0 20 20"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                        AI answers customer calls
+                      </li>
+                      <li className="flex items-start gap-3">
+                        <svg
+                          className="h-5 w-5 text-green-400 mt-0.5 flex-shrink-0"
+                          fill="currentColor"
+                          viewBox="0 0 20 20"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                        <span>Basic intake & message capture</span>
+                      </li>
+                      <li className="flex items-start gap-3">
+                        <svg
+                          className="h-5 w-5 text-green-400 mt-0.5 flex-shrink-0"
+                          fill="currentColor"
+                          viewBox="0 0 20 20"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                        Shares caller details with your team
+                      </li>
+                      <li className="flex items-start gap-3 text-white/70">
+                        <svg
+                          className="h-5 w-5 text-green-400 mt-0.5 flex-shrink-0"
+                          fill="currentColor"
+                          viewBox="0 0 20 20"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                        Works during and after business hours
+                      </li>
+                    </ul>
+                  </div>
+                  <Button
+                    onClick={handleStartTrial}
+                    className="w-full bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white font-bold py-6 rounded-xl shadow-lg shadow-purple-900/30 transition-all hover:scale-[1.02] active:scale-[0.98]"
+                  >
+                    Start Free Trial
+                  </Button>
+                </div>
+
+                {/* Pro plan pricing card */}
+                <div className="relative group">
+                  <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 to-pink-600 rounded-3xl blur-xl opacity-40 group-hover:opacity-60 transition" />
+                  <div className="relative bg-gradient-to-br from-[#1a0b2e] to-[#0f0520] border-2 border-purple-500/50 rounded-2xl p-8 md:p-10 space-y-6 hover:scale-105 transition-all shadow-2xl">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-3xl font-bold text-white font-heading">Pro</h3>
+                      <div className="px-4 py-2 bg-gradient-to-r from-purple-500/20 to-pink-500/20 border border-purple-400/50 rounded-full">
+                        <span className="text-sm font-semibold text-transparent bg-clip-text bg-gradient-to-r from-purple-300 to-pink-300">
+                          Most Popular
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-6xl font-bold text-white font-heading">$199</span>
+                      <span className="text-xl text-white/60">/ month</span>
+                    </div>
+
+                    <p className="text-white/70 text-lg leading-relaxed">
+                      For growing businesses that need scheduling and routing.
+                    </p>
+
+                    <Button
+                      onClick={handleStartTrial}
+                      className="w-full bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white font-bold text-lg py-6 rounded-xl shadow-lg shadow-purple-900/30 transition-all hover:scale-105 active:scale-95"
+                    >
+                      Start Free Trial
+                    </Button>
+
+                    <div className="pt-4 space-y-4">
+                      <p className="text-sm text-white/50 font-medium">Everything in Starter, plus:</p>
+                      <ul className="space-y-3">
+                        {[
+                          "Appointment booking",
+                          "Calendar & CRM sync",
+                          "Smart call routing to a human when needed",
+                          "Priority support",
+                        ].map((feature) => (
+                          <li key={feature} className="flex items-start gap-3">
+                            <svg
+                              className="h-6 w-6 text-purple-400 flex-shrink-0 mt-0.5"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            </svg>
+                            <span className="text-white/80 leading-relaxed">{feature}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <p className="text-center text-white/50 text-sm pt-8">
+                7-day free trial. No credit card required. Cancel anytime.
+              </p>
+            </div>
+          </div>
+        </section>
+
         <section className="py-28 md:py-36 bg-gradient-to-b from-[#1a0a2e] to-[#0a0a1a] relative overflow-hidden">
           <div className="absolute inset-0">
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-purple-500/20 rounded-full blur-3xl animate-pulse" />
