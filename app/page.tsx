@@ -368,7 +368,7 @@ export default function Home() {
                     customer
                   </span>
                   <br />
-                  <span className="text-white/90">again</span>
+                  <span className="text-white/90">call again</span>
                 </h1>
 
                 <p className="text-xl md:text-2xl text-white/70 leading-relaxed max-w-xl">
@@ -506,7 +506,7 @@ export default function Home() {
                 Everything Your Business Needs
                 <br />
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-purple-400">
-                  from an AI Receptionist
+                  from AI Receptionist
                 </span>
               </h2>
               <p className="text-xl text-white/60 leading-relaxed">
@@ -590,11 +590,8 @@ export default function Home() {
         <section className="py-28 md:py-36 bg-[#0a0a1a]">
           <div className="container mx-auto px-4">
             <div className="max-w-5xl mx-auto">
-              <p className="text-center text-purple-400 text-sm uppercase tracking-wider mb-4 font-mono">
-                Your AI-Powered Digital Front Desk
-              </p>
               <h2 className="text-5xl md:text-6xl font-bold text-center mb-6 text-white font-heading">
-                Your digital
+                Your  AI-Powered digital
                 <br />
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-purple-400">
                   front desk
@@ -652,14 +649,11 @@ export default function Home() {
 
           <div className="container mx-auto px-4 relative z-10">
             <div className="max-w-6xl mx-auto">
-              <p className="text-center text-pink-400 text-sm uppercase tracking-wider mb-4 font-mono">
-                AI Receptionist, Real-World Use Cases
-              </p>
               <h2 className="text-5xl md:text-6xl font-bold text-center mb-6 text-white font-heading">
-                See it in
+                AI Receptionist,
                 <br />
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-purple-400">
-                  action
+                  Real-World Use Cases
                 </span>
               </h2>
               <p className="text-center text-white/60 mb-16 text-xl">
@@ -729,11 +723,8 @@ export default function Home() {
         <section id="industries" className="py-28 md:py-36 bg-[#0a0a1a]">
           <div className="container mx-auto px-4">
             <div className="max-w-5xl mx-auto">
-              <p className="text-center text-purple-400 text-sm uppercase tracking-wider mb-4 font-mono">
-                Industries That Use Our AI Receptionist
-              </p>
               <h2 className="text-5xl md:text-6xl font-bold text-center mb-6 text-white font-heading">
-                Industries We Serve
+                Industries That Use Our AI Receptionist
               </h2>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
