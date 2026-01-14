@@ -37,6 +37,62 @@ export interface Message {
   calendlyUrl?: string
 }
 
+function cleanStr(v: any) {
+  if (typeof v !== "string") return ""
+  // n8n a veces entrega "=booking" o "={{ ... }}"
+  return v.replace(/^\s*=+\s*/g, "").trim()
+}
+
+function extractFirstUrl(text: string) {
+  const t = cleanStr(text)
+  if (!t) return ""
+  const m = t.match(/https?:\/\/[^\s)]+/i)
+  return (m?.[0] ?? "").trim()
+}
+
+function normalizeApiResponse(rawData: any) {
+  // Soporta:
+  // A) { replyText, action, metadata: { calendlyUrl } }
+  // B) { reply, bookingLink, action }
+  // C) [ { ... } ]
+  const data = Array.isArray(rawData) ? rawData[0] : rawData
+
+  const replyText =
+    cleanStr(data?.replyText) ||
+    cleanStr(data?.reply) ||
+    cleanStr(data?.response) ||
+    ""
+
+  const action = cleanStr(data?.action || data?.meta?.action).toLowerCase()
+
+  // ✅ calendly puede venir en metadata.calendlyUrl (tu caso)
+  let calendlyUrl =
+    cleanStr(data?.metadata?.calendlyUrl) ||
+    cleanStr(data?.metadata?.calendlyURL) ||
+    cleanStr(data?.metadata?.bookingLink) ||
+    cleanStr(data?.bookingLink) ||
+    cleanStr(data?.bookinglink) ||
+    cleanStr(data?.booking_link) ||
+    cleanStr(data?.calendlyUrl) ||
+    cleanStr(data?.meta?.bookingLink) ||
+    ""
+
+  // ✅ fallback: si no llega en campo, lo sacamos del texto
+  if (!calendlyUrl) {
+    calendlyUrl = extractFirstUrl(replyText)
+  }
+
+  const intent = cleanStr(data?.intent).toLowerCase()
+
+  const sessionId =
+    cleanStr(data?.sessionId) ||
+    cleanStr(data?.sessionID) ||
+    cleanStr(data?.session_id) ||
+    ""
+
+  return { replyText, action, calendlyUrl, intent, sessionId, raw: data }
+}
+
 export default function ChatPage() {
   const searchParams = useSearchParams()
   const firstName = searchParams.get("firstName")
@@ -57,6 +113,7 @@ export default function ChatPage() {
       timestamp: new Date(),
     },
   ])
+
   const [isLoading, setIsLoading] = useState(false)
   const [showContactForm, setShowContactForm] = useState(false)
   const [voiceEnabled, setVoiceEnabled] = useState(true)
@@ -66,6 +123,7 @@ export default function ChatPage() {
     name: firstName && lastName ? `${firstName} ${lastName}` : "",
     email: email || "",
   })
+
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const chatInputRef = useRef<{ startVoiceCapture: () => void } | null>(null)
   const isAISpeaking = useRef(false)
@@ -90,30 +148,19 @@ export default function ChatPage() {
   }, [])
 
   useEffect(() => {
-    // Only auto-restart if voice mode is ON
-    if (!voiceMode || isLoading || isHandoff) {
-      return
-    }
-
-    // Check if the last message is from assistant (AI just responded)
+    if (!voiceMode || isLoading || isHandoff) return
     const lastMessage = messages[messages.length - 1]
-    if (lastMessage?.role !== "assistant") {
-      return
-    }
+    if (lastMessage?.role !== "assistant") return
 
-    // Wait for AI to finish speaking, then restart voice capture
     const checkAndRestart = () => {
       if (voiceMode && !isLoading && !isHandoff && !isAISpeaking.current) {
         chatInputRef.current?.startVoiceCapture()
       } else if (isAISpeaking.current) {
-        // If still speaking, check again in 500ms
         setTimeout(checkAndRestart, 500)
       }
     }
 
-    // Give a moment for speech to start, then begin checking
     const timer = setTimeout(checkAndRestart, 1000)
-
     return () => clearTimeout(timer)
   }, [voiceMode, isLoading, isHandoff, messages])
 
@@ -134,9 +181,7 @@ export default function ChatPage() {
     try {
       const response = await fetch("/api/chat", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           message: content,
           sessionId: sessionId.current,
@@ -149,30 +194,45 @@ export default function ChatPage() {
       })
 
       if (!response.ok) {
+        const t = await response.text().catch(() => "")
+        console.error("[v0] API error:", response.status, t)
         throw new Error(`API returned ${response.status}`)
       }
 
-      const contentType = response.headers.get("content-type")
-      if (!contentType || !contentType.includes("application/json")) {
-        const text = await response.text()
-        console.error("[v0] Non-JSON response:", text)
-        throw new Error("Server returned non-JSON response")
+      const raw = await response.text()
+      let parsed: any
+      try {
+        parsed = JSON.parse(raw)
+      } catch {
+        console.error("[v0] Invalid JSON response:", raw)
+        throw new Error("Server returned invalid JSON")
       }
 
-      const data = await response.json()
+      const normalized = normalizeApiResponse(parsed)
+      console.log("[v0] normalized:", normalized)
 
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: "assistant",
-        content: data.replyText,
+        content: normalized.replyText || "Thanks! How can I help next?",
         timestamp: new Date(),
       }
 
-      if (data.action === "booking" && data.metadata?.calendlyUrl) {
-        assistantMessage.calendlyUrl = data.metadata.calendlyUrl
+      const isBooking =
+        normalized.action === "booking" ||
+        normalized.intent === "book_appointment" ||
+        normalized.intent === "book_appointments" ||
+        normalized.intent === "booking" ||
+        normalized.intent === "book_appointment(s)" // por si llega raro
+
+      // ✅ aquí se arma la burbuja
+      if (isBooking && normalized.calendlyUrl) {
+        assistantMessage.calendlyUrl = normalized.calendlyUrl
       }
 
-      if (data.action === "handoff") {
+      const isHandoffAction =
+        normalized.action === "handoff" || normalized.intent === "human" || normalized.intent === "handoff"
+      if (isHandoffAction) {
         setIsHandoff(true)
         assistantMessage.type = "escalate"
       }
@@ -181,8 +241,7 @@ export default function ChatPage() {
 
       if (voiceEnabled && !isHandoff) {
         isAISpeaking.current = true
-        speak(data.replyText, () => {
-          // Callback when speech completes
+        speak(assistantMessage.content, () => {
           isAISpeaking.current = false
         })
       }
@@ -214,9 +273,7 @@ export default function ChatPage() {
   }
 
   const toggleVoice = () => {
-    if (voiceEnabled) {
-      stopSpeaking()
-    }
+    if (voiceEnabled) stopSpeaking()
     setVoiceEnabled(!voiceEnabled)
   }
 
@@ -229,9 +286,7 @@ export default function ChatPage() {
       stopSpeaking()
     } else {
       setTimeout(() => {
-        if (chatInputRef.current?.startVoiceCapture) {
-          chatInputRef.current.startVoiceCapture()
-        }
+        chatInputRef.current?.startVoiceCapture?.()
       }, 300)
     }
   }
@@ -248,6 +303,7 @@ export default function ChatPage() {
           <div key={message.id}>
             <ChatMessage message={message} />
             {message.type === "book_confirmed" && message.event && <BookingConfirmation event={message.event} />}
+
             {message.role === "assistant" && message.calendlyUrl && (
               <div className="ml-12 mt-3">
                 <Button
@@ -302,6 +358,7 @@ export default function ChatPage() {
               </>
             )}
           </Button>
+
           <Button
             variant="ghost"
             size="sm"
@@ -322,9 +379,7 @@ export default function ChatPage() {
           </Button>
         </div>
 
-        {showQuickReplies && !isHandoff && (
-          <QuickReplies actions={lastMessage.suggestedActions!} onSelect={handleQuickReply} />
-        )}
+        {showQuickReplies && !isHandoff && <QuickReplies actions={lastMessage.suggestedActions!} onSelect={handleQuickReply} />}
 
         <div className="px-4 py-3 pb-[calc(env(safe-area-inset-bottom)+12px)]">
           <ChatInput ref={chatInputRef} onSend={sendMessage} disabled={isLoading || isHandoff} voiceMode={voiceMode} />
